@@ -34,8 +34,8 @@ static constexpr uint32_t MAX_TITLE_SIZE        = 64;
 
 namespace wasm { namespace db {
 
-#define CUSTODY_TBL [[eosio::table, eosio::contract("flon.custody")]]
-#define CUSTODY_TBL_NAME(name) [[eosio::table(name), eosio::contract("flon.custody")]]
+#define CUSTODY_TBL [[eosio::table, eosio::contract("flon.vest")]]
+#define CUSTODY_TBL_NAME(name) [[eosio::table(name), eosio::contract("flon.vest")]]
 
 struct CUSTODY_TBL_NAME("global") global_t {
     bool initialized        = false;

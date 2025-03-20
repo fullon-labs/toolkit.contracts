@@ -34,10 +34,10 @@ static constexpr uint32_t MAX_TITLE_SIZE        = 64;
 
 namespace wasm { namespace db {
 
-#define CUSTODY_TBL [[eosio::table, eosio::contract("flon.custody")]]
-#define CUSTODY_TBL_NAME(name) [[eosio::table(name), eosio::contract("flon.custody")]]
+#define VEST_TBL [[eosio::table, eosio::contract("flon.vest")]]
+#define VEST_TBL_NAME(name) [[eosio::table(name), eosio::contract("flon.vest")]]
 
-struct CUSTODY_TBL_NAME("global") global_t {
+struct VEST_TBL_NAME("global") global_t {
     asset plan_fee          = asset(0, SYS_SYMBOL);
     name fee_receiver;
 
@@ -53,7 +53,7 @@ enum plan_status_t {
     PLAN_DISABLED      = 3
 };
 
-struct CUSTODY_TBL plan_t {
+struct VEST_TBL plan_t {
     uint64_t        id;
     name            owner;                      //plan owner
     string          title;                      //plan title: <=64 chars
@@ -90,7 +90,7 @@ enum issue_status_t {
     ISSUE_ENDED         = 3
 };
 
-struct CUSTODY_TBL issue_t {
+struct VEST_TBL issue_t {
     // scope = contract self
     uint64_t      issue_id = 0;                 //PK, unique within the contract
     uint64_t      plan_id = 0;                  //plan id
@@ -127,7 +127,7 @@ struct CUSTODY_TBL issue_t {
                                 (status)(issued_at)(updated_at) )
 };
 
-struct CUSTODY_TBL account {
+struct VEST_TBL account {
     // scope = contract self
     name    owner;
     uint64_t last_plan_id;

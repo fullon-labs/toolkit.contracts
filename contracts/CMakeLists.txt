@@ -44,15 +44,9 @@ set(TOKEN_ICON_URI "token.png#207ff68b0406eaa56618b08bda81d6a0954543f36adc328ab3
 set(TRANSFER_ICON_URI "transfer.png#5dfad0df72772ee1ccc155e670c1d124f5c5122f1d5027565df38b418042d1dd")
 set(VOTING_ICON_URI "voting.png#db28cd3db6e62d4509af3644ce7d377329482a14bb4bfaca2aa5f1400d8e8a84")
 
-add_subdirectory(flon.bios)
-add_subdirectory(flon.boot)
-add_subdirectory(flon.msig)
-add_subdirectory(flon.system)
-add_subdirectory(flon.token)
-add_subdirectory(flon.wrap)
-# add_subdirectory(flon.bpay)
-add_subdirectory(flon.reward)
-add_subdirectory(pubkey.token)
+#add_subdirectory(flon.split)
+add_subdirectory(flon.test)
+add_subdirectory(flon.vest)
 
 
 if(BUILD_TESTS)

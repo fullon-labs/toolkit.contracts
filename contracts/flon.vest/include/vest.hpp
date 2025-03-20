@@ -1,9 +1,9 @@
-#include "custodydb.hpp"
+#include "vestdb.hpp"
 
 using namespace std;
 using namespace wasm::db;
 
-class [[eosio::contract("flon.custody")]] custody: public eosio::contract {
+class [[eosio::contract("flon.vest")]] vest: public eosio::contract {
 private:
     global_singleton    _global;
     global_t            _gstate;
@@ -11,7 +11,7 @@ private:
 public:
     using contract::contract;
 
-    custody(eosio::name receiver, eosio::name code, datastream<const char*> ds):
+    vest(eosio::name receiver, eosio::name code, datastream<const char*> ds):
         contract(receiver, code, ds),
         _global(get_self(), get_self().value)
     {
@@ -75,4 +75,4 @@ public:
         });
     }
 
-}; //contract custody
+}; //contract vest
