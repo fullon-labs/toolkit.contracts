@@ -1,0 +1,10 @@
+<h1 class="contract">view</h1>
+
+---
+spec_version: "0.2.0"
+title: Token Summary for FLON/ELON/USDT/BTC/ETH/BNB
+summary: 'View FLON/ELON/USDT/BTC/ETH/BNB'
+icon: @ICON_BASE_URL@/@TOKEN_ICON_URI@
+---
+
+return balances of all top tokens for a given account
