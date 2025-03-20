@@ -1,8 +1,4 @@
-<<<<<<< HEAD
-mpush flon setparams '{"params": {
-=======
 mpush flonian setparams '{"params": {
->>>>>>> fababafe1a62d4ba0025658e62df6b7800ddcbfa
     "max_block_net_usage": 1048576,
     "target_block_net_usage_pct": 1000,
     "max_transaction_net_usage": 524288,
@@ -20,12 +16,6 @@ mpush flonian setparams '{"params": {
     "max_inline_action_size": 4096,
     "max_inline_action_depth": 4,
     "max_authority_depth": 6
-<<<<<<< HEAD
-}}' -p flon
-
-mtbl flon flon global
-=======
 }}' -p flonian
 
 mtbl flonian flonian global
->>>>>>> fababafe1a62d4ba0025658e62df6b7800ddcbfa

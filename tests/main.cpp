@@ -8,14 +8,6 @@
 #include <boost/test/included/unit_test.hpp>
 #include <fc/log/logger.hpp>
 #include <eosio/chain/exceptions.hpp>
-<<<<<<< HEAD
-#include <Runtime/Runtime.h>
-
-// #include "flon.system_tester.hpp"
-
-// using namespace eosio_system;
-#define BOOST_TEST_STATIC_LINK
-=======
 
 #include "flon.system_tester.hpp"
 
@@ -23,7 +15,6 @@ using namespace eosio_system;
 #ifndef BOOST_TEST_STATIC_LINK
 #define BOOST_TEST_STATIC_LINK
 #endif
->>>>>>> fababafe1a62d4ba0025658e62df6b7800ddcbfa
 
 void translate_fc_exception(const fc::exception &e) {
    std::cerr << "\033[33m" <<  e.to_detail_string() << "\033[0m" << std::endl;
@@ -41,11 +32,6 @@ boost::unit_test::test_suite* init_unit_test_suite(int argc, char* argv[]) {
          break;
       }
    }
-<<<<<<< HEAD
-   
-=======
-
->>>>>>> fababafe1a62d4ba0025658e62df6b7800ddcbfa
    if(is_verbose) {
       fc::logger::get(DEFAULT_LOGGER).set_log_level(fc::log_level::debug);
    } else {

@@ -1,23 +1,6 @@
 #pragma once
 #include <eosio/testing/tester.hpp>
 
-<<<<<<< HEAD
-namespace eosio { namespace testing {
-
-struct contracts {
-   
-   static std::vector<uint8_t> recover_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../contracts/realid.dao/realid.dao.wasm"); }
-   static std::vector<char>    recover_abi() { return read_abi("${CMAKE_BINARY_DIR}/../contracts/realid.dao/realid.dao.abi"); }
-
-   static std::vector<uint8_t> proxy_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../contracts/realid.owner/realid.owner.wasm"); }
-   static std::vector<char>    proxy_abi() { return read_abi("${CMAKE_BINARY_DIR}/../contracts/realid.owner/realid.owner.abi"); }
-
-   static std::vector<uint8_t> auth_wasm() { return read_wasm("${CMAKE_BINARY_DIR}/../contracts/realid.auth/realid.auth.wasm"); }
-   static std::vector<char>    auth_abi() { return read_abi("${CMAKE_BINARY_DIR}/../contracts/realid.auth/realid.auth.abi"); }
-
-};
-}} //ns eosio::testing
-=======
 namespace eosio::testing {
 
 struct contracts {
@@ -74,4 +57,3 @@ inline std::vector<char>    sendinline_abi()
 
 
 } // namespace system_contracts::testing::test_contracts
->>>>>>> fababafe1a62d4ba0025658e62df6b7800ddcbfa

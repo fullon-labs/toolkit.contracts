@@ -1,11 +1,4 @@
 #!/usr/bin/env bash
-<<<<<<< HEAD
-set -eo pipefail
-
-# Source helper functions and variables.
-. ./scripts/.environment
-. ./scripts/helper.sh
-=======
 export PROJECT_DIR=$( dirname "${BASH_SOURCE[0]}" )
 export ROOT_DIR=${PROJECT_DIR}/
 
@@ -77,19 +70,11 @@ if [[ ${BUILD_TESTS} == true ]]; then
    # Prompt user for location of flon.
    flon-directory-prompt
 fi
->>>>>>> fababafe1a62d4ba0025658e62df6b7800ddcbfa
 
 # Prompt user for location of flon.cdt.
 cdt-directory-prompt
 
 # Include CDT_INSTALL_DIR in CMAKE_FRAMEWORK_PATH
-<<<<<<< HEAD
-echo "Using EOSIO.CDT installation at: $CDT_INSTALL_DIR"
-export CMAKE_FRAMEWORK_PATH="${CDT_INSTALL_DIR}:${CMAKE_FRAMEWORK_PATH}"
-
-
-printf "\t=========== Building toolkit.contracts ===========\n\n"
-=======
 echo "Using FLON.CDT installation at: $CDT_INSTALL_DIR"
 export CMAKE_FRAMEWORK_PATH="${CDT_INSTALL_DIR}:${CMAKE_FRAMEWORK_PATH}"
 
@@ -103,17 +88,11 @@ if [[ ${BUILD_TESTS} == true ]]; then
 fi
 
 printf "\t=========== Building flon.contracts ===========\n\n"
->>>>>>> fababafe1a62d4ba0025658e62df6b7800ddcbfa
 RED='\033[0;31m'
 NC='\033[0m'
 CPU_CORES=$(getconf _NPROCESSORS_ONLN)
 mkdir -p build
 pushd build &> /dev/null
-<<<<<<< HEAD
-cmake -DBUILD_TESTS=${BUILD_TESTS} ../
-make -j $CPU_CORES
-=======
 cmake -DBUILD_TESTS=${BUILD_TESTS} -DCMAKE_INSTALL_PREFIX="${INSTALL_LOCATION}" ../
 make -j $CPU_CORES ${MAKE_TARGET}
->>>>>>> fababafe1a62d4ba0025658e62df6b7800ddcbfa
 popd &> /dev/null
