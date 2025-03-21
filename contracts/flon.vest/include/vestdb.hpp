@@ -74,8 +74,8 @@ struct VEST_TBL plan_t {
     uint128_t by_owner() const { return (uint128_t)owner.value << 64 | (uint128_t)id; }
 
     typedef eosio::multi_index<"plans"_n, plan_t,
-        indexed_by<"updatedid"_n,  const_mem_fun<plan_t, uint64_t, &plan_t::by_updatedid> >,
-        indexed_by<"owneridx"_n,  const_mem_fun<plan_t, uint128_t, &plan_t::by_owner> >
+        indexed_by<"by.updatedid"_n,  const_mem_fun<plan_t, uint64_t, &plan_t::by_updatedid> >,
+        indexed_by<"by.owneridx"_n,  const_mem_fun<plan_t, uint128_t, &plan_t::by_owner> >
     > tbl_t;
 
     EOSLIB_SERIALIZE( plan_t, (id)(owner)(title)(asset_contract)(asset_symbol)(unlock_interval_days)(unlock_times)
@@ -115,11 +115,10 @@ struct VEST_TBL issue_t {
     // uint64_t by_receiver()const { return receiver.value; }
 
     typedef eosio::multi_index<"issues"_n, issue_t,
-        indexed_by<"updatedid"_n,       const_mem_fun<issue_t, uint64_t, &issue_t::by_updatedid> >,
-        indexed_by<"planidx"_n,         const_mem_fun<issue_t, uint128_t, &issue_t::by_plan>>,
-        indexed_by<"receiveridx"_n,     const_mem_fun<issue_t, uint128_t, &issue_t::by_receiver_issue>>,
-        indexed_by<"planreceiver"_n,    const_mem_fun<issue_t, uint128_t, &issue_t::by_planreceiver>>
-        // indexed_by<"receivers"_n,       const_mem_fun<issue_t, uint64_t, &issue_t::by_receiver>>
+        indexed_by<"by.updatedid"_n,       const_mem_fun<issue_t, uint64_t, &issue_t::by_updatedid> >,
+        indexed_by<"by.planidx"_n,         const_mem_fun<issue_t, uint128_t, &issue_t::by_plan>>,
+        indexed_by<"by.recveridx"_n,     const_mem_fun<issue_t, uint128_t, &issue_t::by_receiver_issue>>,
+        indexed_by<"by.planrecver"_n,    const_mem_fun<issue_t, uint128_t, &issue_t::by_planreceiver>>
     > tbl_t;
 
     EOSLIB_SERIALIZE( issue_t,  (issue_id)(plan_id)(issuer)(receiver)(issued)(locked)(unlocked)

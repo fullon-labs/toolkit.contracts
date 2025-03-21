@@ -82,8 +82,8 @@ struct CUSTODY_TBL plan_t {
     uint64_t by_updateat() const { return updated_at.sec_since_epoch(); }
 
     typedef eosio::multi_index<"plans"_n, plan_t,
-        indexed_by<"updateat"_n,     const_mem_fun<plan_t, uint64_t, &plan_t::by_updateat>>,
-        indexed_by<"owneridx"_n,  const_mem_fun<plan_t, uint64_t, &plan_t::by_owner> >
+        indexed_by<"by.updateat"_n,     const_mem_fun<plan_t, uint64_t, &plan_t::by_updateat>>,
+        indexed_by<"by.owneridx"_n,     const_mem_fun<plan_t, uint64_t, &plan_t::by_owner> >
     > tbl_t;
 
     EOSLIB_SERIALIZE( plan_t, (id)(owner)(title)(asset_contract)(asset_symbol)(unlock_interval_days)(unlock_times)
@@ -121,7 +121,7 @@ struct CUSTODY_TBL issue_t {
     uint64_t by_updateat() const { return updated_at.sec_since_epoch(); }
 
     typedef eosio::multi_index<"issues"_n, issue_t,
-        indexed_by<"updateat"_n,     const_mem_fun<issue_t, uint64_t, &issue_t::by_updateat>>
+        indexed_by<"by.updateat"_n,     const_mem_fun<issue_t, uint64_t, &issue_t::by_updateat>>
     > tbl_t;
 
     EOSLIB_SERIALIZE( issue_t,  (plan_id)(issue_id)(issuer)(receiver)(issued)(locked)(unlocked)

@@ -274,17 +274,17 @@ void vest::ontransfer(name from, name to, asset quantity, string memo) {
         if (issue_id == 0) issue_id = 1;
 
         issue_tbl.emplace( _self, [&]( auto& issue ) {
-            issue.issue_id = issue_id;
-            issue.plan_id = plan_id;
-            issue.issuer = from;
-            issue.receiver = receiver;
+            issue.issue_id  = issue_id;
+            issue.plan_id   = plan_id;
+            issue.issuer    = from;
+            issue.receiver  = receiver;
             issue.first_unlock_days = first_unlock_days;
-            issue.issued = quantity;
-            issue.locked = quantity;
-            issue.unlocked = asset(0, quantity.symbol);
+            issue.issued    = quantity;
+            issue.locked    = quantity;
+            issue.unlocked  = asset(0, quantity.symbol);
             issue.unlock_interval_days = plan_itr->unlock_interval_days;
             issue.unlock_times = plan_itr->unlock_times;
-            issue.status = ISSUE_NORMAL;
+            issue.status    = ISSUE_NORMAL;
             issue.issued_at = now;
             issue.updated_at = now;
         });
