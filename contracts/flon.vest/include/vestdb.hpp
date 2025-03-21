@@ -70,11 +70,9 @@ struct VEST_TBL plan_t {
 
     uint64_t primary_key() const { return id; }
 
-    uint64_t by_updatedid() const { return ((uint64_t)updated_at.sec_since_epoch() << 32) | (id & 0x00000000FFFFFFFF); }
     uint128_t by_owner() const { return (uint128_t)owner.value << 64 | (uint128_t)id; }
 
     typedef eosio::multi_index<"plans"_n, plan_t,
-        indexed_by<"by.updatedid"_n,  const_mem_fun<plan_t, uint64_t, &plan_t::by_updatedid> >,
         indexed_by<"by.owneridx"_n,  const_mem_fun<plan_t, uint128_t, &plan_t::by_owner> >
     > tbl_t;
 
@@ -90,8 +88,9 @@ enum issue_status_t {
     ISSUE_ENDED         = 3
 };
 
+//scope: _self
 struct VEST_TBL issue_t {
-    // scope = contract self
+    // 
     uint64_t      issue_id = 0;                 //PK, unique within the contract
     uint64_t      plan_id = 0;                  //plan id
     name          issuer;                       //issuer
@@ -108,16 +107,14 @@ struct VEST_TBL issue_t {
 
     uint64_t primary_key() const { return issue_id; }
 
-    uint64_t by_updatedid() const { return ((uint64_t)updated_at.sec_since_epoch() << 32) | (issue_id & 0x00000000FFFFFFFF); }
     uint128_t by_plan() const { return (uint128_t)plan_id << 64 | (uint128_t)issue_id; }
     uint128_t by_receiver_issue() const { return (uint128_t)receiver.value << 64 | (uint128_t)issue_id; }
     uint128_t by_planreceiver() const { return (uint128_t)plan_id << 64 | (uint128_t)receiver.value; }
     // uint64_t by_receiver()const { return receiver.value; }
 
     typedef eosio::multi_index<"issues"_n, issue_t,
-        indexed_by<"by.updatedid"_n,       const_mem_fun<issue_t, uint64_t, &issue_t::by_updatedid> >,
-        indexed_by<"by.planidx"_n,         const_mem_fun<issue_t, uint128_t, &issue_t::by_plan>>,
-        indexed_by<"by.recveridx"_n,     const_mem_fun<issue_t, uint128_t, &issue_t::by_receiver_issue>>,
+        indexed_by<"by.planidx"_n,      const_mem_fun<issue_t, uint128_t, &issue_t::by_plan>>,
+        indexed_by<"by.recveridx"_n,    const_mem_fun<issue_t, uint128_t, &issue_t::by_receiver_issue>>,
         indexed_by<"by.planrcver"_n,    const_mem_fun<issue_t, uint128_t, &issue_t::by_planreceiver>>
     > tbl_t;
 
@@ -125,9 +122,8 @@ struct VEST_TBL issue_t {
                                 (first_unlock_days)(unlock_interval_days)(unlock_times)
                                 (status)(issued_at)(updated_at) )
 };
-
+//scope: _self
 struct VEST_TBL account {
-    // scope = contract self
     name    owner;
     uint64_t last_plan_id;
 
