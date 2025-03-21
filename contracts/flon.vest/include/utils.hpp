@@ -5,6 +5,7 @@
 #include <iterator>
 #include <eosio/eosio.hpp>
 #include <eosio/asset.hpp>
+#include <errno.h>
 
 #include "safe.hpp"
 
