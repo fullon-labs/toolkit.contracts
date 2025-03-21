@@ -118,7 +118,7 @@ struct VEST_TBL issue_t {
         indexed_by<"by.updatedid"_n,       const_mem_fun<issue_t, uint64_t, &issue_t::by_updatedid> >,
         indexed_by<"by.planidx"_n,         const_mem_fun<issue_t, uint128_t, &issue_t::by_plan>>,
         indexed_by<"by.recveridx"_n,     const_mem_fun<issue_t, uint128_t, &issue_t::by_receiver_issue>>,
-        indexed_by<"by.planrecver"_n,    const_mem_fun<issue_t, uint128_t, &issue_t::by_planreceiver>>
+        indexed_by<"by.planrcver"_n,    const_mem_fun<issue_t, uint128_t, &issue_t::by_planreceiver>>
     > tbl_t;
 
     EOSLIB_SERIALIZE( issue_t,  (issue_id)(plan_id)(issuer)(receiver)(issued)(locked)(unlocked)
