@@ -12,84 +12,20 @@ static constexpr eosio::name active_permission{"active"_n};
 
 // transfer out from contract self
 #define TRANSFER_OUT(token_contract, to, quantity, memo) token::transfer_action(                                \
-                                                             token_contract, {{get_self(), active_permission}}) \
-                                                             .send(                                             \
-                                                                 get_self(), to, quantity, memo);
+                token_contract, {{get_self(), active_permission}}) \
+                .send(                                             \
+                    get_self(), to, quantity, memo);
 
-[[eosio::action]]
-void vest::init() {
+void vest::init(const name& admin, const asset &plan_fee, const name &fee_receiver) {
     require_auth( _self );
-
-    // auto issues = issue_t::tbl_t(_self, _self.value);
-    // auto itr = issues.begin();
-    // int step = 0;
-    // while (itr != issues.end()) {
-    //     if (step > 30) return;
-
-    //     if (itr->plan_id != 1 || itr->issuer != "flonianadmin"_n) {
-    //         itr = issues.erase( itr );
-    //         step++;
-    //     } else
-    //         itr++;
-    // }
-
-    auto plans = plan_t::tbl_t(_self, _self.value);
-    auto itr = plans.begin();
-    int step = 0;
-    while (itr != plans.end()) {
-        if (step > 30) return;
-
-        if (itr->id != 1) {
-            itr = plans.erase( itr );
-            step++;
-        } else
-            itr++;
-    }
-
-    check( step > 0, "none deleted" );
-}
-
-[[eosio::action]]
-void vest::fixissue(const uint64_t& issue_id, const asset& issued, const asset& locked, const asset& unlocked) {
-    CHECK(has_auth( _self ) || has_auth( "flonianadmin"_n ), "not authorized to end issue" )
-
-    issue_t::tbl_t issue_tbl(get_self(), get_self().value);
-    auto itr = issue_tbl.find(issue_id);
-    check( itr != issue_tbl.end(), "issue not found: " + to_string(issue_id) );
-    check( issued.symbol == itr->issued.symbol, "issued symbol mismatch");
-    check( locked.symbol == itr->locked.symbol, "locked symbol mismatch");
-    check( unlocked.symbol == itr->unlocked.symbol, "unlocked symbol mismatch");
-
-    check( issued.amount >= 0, "issued amount can not be negtive");
-    check( locked.amount >= 0, "locked amount can not be negtive");
-    check( unlocked.amount >= 0, "unlocked amount can not be negtive");
-    check( issued.amount == locked.amount + unlocked.amount,
-            "issued.amount must be equal to (locked.amount + unlocked.amount)");
-
-    issue_tbl.modify(itr, get_self(), [&]( auto& issue ) {
-        issue.issued = issued;
-        issue.locked = locked;
-        issue.unlocked = unlocked;
-    });
-}
-
-[[eosio::action]]
-void vest::fixissuedays() {
-    CHECK(has_auth( _self ) || has_auth( "flonianadmin"_n ), "not authorized to end issue" )
-
-    issue_t::tbl_t issue_tbl(get_self(), get_self().value);
-    for (auto itr = issue_tbl.begin(); itr != issue_tbl.end(); itr++) {
-        if (itr->first_unlock_days == 0) {
-            issue_tbl.modify(itr, same_payer, [&]( auto& issue ) {
-                issue.first_unlock_days = issue.unlock_interval_days;
-            });
-        }
-    }
+    CHECK( is_account(admin), "admin account does not exist" )
+    CHECKC(plan_fee.amount > 0, error::INVALID_AMOUNT, "plan fee must be greater than 0");
+    CHECK( is_account(fee_receiver), "fee_receiver account does not exist" )
+    _global.set(global_t{admin, plan_fee, fee_receiver}, _self);
 }
 
 void vest::setreceiver(const uint64_t& issue_id, const name& receiver) {
-    CHECK(has_auth( _self ) || has_auth( "flonianadmin"_n ), "not authorized to end issue" )
-
+    _check_admin();
     check(is_account(receiver), "receiver account not existed");
 
     issue_t::tbl_t issue_tbl(get_self(), get_self().value);
@@ -100,20 +36,10 @@ void vest::setreceiver(const uint64_t& issue_id, const name& receiver) {
     });
 }
 
-[[eosio::action]]
-void vest::setconfig(const asset &plan_fee, const name &fee_receiver) {
-    CHECK(has_auth( _self ) || has_auth( "flonianadmin"_n ), "not authorized to end issue" )
-
-    CHECK(plan_fee.symbol == SYS_SYMBOL, "plan_fee symbol mismatch with sys symbol")
-    CHECK(plan_fee.amount >= 0, "plan_fee symbol amount can not be negative")
-    CHECK(is_account(fee_receiver), "fee_receiver account does not exist")
-    _gstate.plan_fee = plan_fee;
-    _gstate.fee_receiver = fee_receiver;
-    _global.set( _gstate, get_self() );
-}
-
-//add a lock plan
-[[eosio::action]] void vest::addplan(const name& owner,
+/***
+ * add a new plan
+ */
+void vest::addplan(const name& owner,
                                         const string& title, const name& asset_contract, const symbol& asset_symbol,
                                         const uint64_t& unlock_interval_days, const int64_t& unlock_times)
 {
@@ -151,13 +77,12 @@ void vest::setconfig(const asset &plan_fee, const name &fee_receiver) {
             acct.last_plan_id = plan_id;
     });
 }
-
-[[eosio::action]]
 void vest::setplanowner(const name& owner, const uint64_t& plan_id, const name& new_owner){
     plan_t::tbl_t plan_tbl(get_self(), get_self().value);
     auto plan_itr = plan_tbl.find(plan_id);
     CHECK( plan_itr != plan_tbl.end(), "plan not found: " + to_string(plan_id) )
     CHECK( owner == plan_itr->owner, "owner mismatch" )
+    
     CHECK( has_auth(plan_itr->owner) || has_auth(get_self()), "Missing required authority of owner or maintainer" )
     CHECK( is_account(new_owner), "new_owner account does not exist");
 
@@ -167,7 +92,6 @@ void vest::setplanowner(const name& owner, const uint64_t& plan_id, const name& 
     });
 }
 
-// [[eosio::action]]
 // void vest::delplan(const name& owner, const uint64_t& plan_id) {
 //     require_auth(get_self());
 
@@ -179,7 +103,6 @@ void vest::setplanowner(const name& owner, const uint64_t& plan_id, const name& 
 //     plan_tbl.erase(plan_itr);
 // }
 
-[[eosio::action]]
 void vest::enableplan(const name& owner, const uint64_t& plan_id, bool enabled) {
     require_auth(owner);
 
@@ -198,7 +121,6 @@ void vest::enableplan(const name& owner, const uint64_t& plan_id, bool enabled) 
 }
 
 //issue-in op: transfer tokens to the contract and lock them according to the given plan
-[[eosio::action]]
 void vest::ontransfer(name from, name to, asset quantity, string memo) {
     if (from == get_self() || to != get_self()) return;
 

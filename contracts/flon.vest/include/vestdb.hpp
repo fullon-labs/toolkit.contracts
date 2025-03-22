@@ -38,10 +38,12 @@ namespace wasm { namespace db {
 #define VEST_TBL_NAME(name) [[eosio::table(name), eosio::contract("flon.vest")]]
 
 struct VEST_TBL_NAME("global") global_t {
+    name admin              = "flonianadmin"_n;
+    name fee_receiver       = "flon.fee"_n;
     asset plan_fee          = asset(0, SYS_SYMBOL);
-    name fee_receiver;
+    
 
-    EOSLIB_SERIALIZE( global_t, (plan_fee)(fee_receiver) )
+    EOSLIB_SERIALIZE( global_t, (admin)(fee_receiver)(plan_fee) )
 };
 typedef eosio::singleton< "global"_n, global_t > global_singleton;
 

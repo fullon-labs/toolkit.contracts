@@ -1,5 +1,15 @@
 {
     "files.associations": {
-        "chrono": "cpp"
+        "chrono": "cpp",
+        "typeinfo": "cpp",
+        "typeindex": "cpp",
+        "*.ipp": "cpp",
+        "text_encoding": "cpp",
+        "ios": "cpp",
+        "random": "cpp",
+        "*.tcc": "cpp",
+        "bitset": "cpp",
+        "set": "cpp",
+        "system_error": "cpp"
     }
 }
