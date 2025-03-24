@@ -48,11 +48,11 @@ public:
     [[eosio::on_notify("*::transfer")]] 
     void ontransfer(name from, name to, asset quantity, string memo);
 
-    ACTION void unlock(const name& unlocker, const uint64_t& plan_id, const uint64_t& issue_id);
+    ACTION unlock(const name& unlocker, const uint64_t& plan_id, const uint64_t& issue_id);
     /**
      * @require run by issuer only
      */
-    ACTION void endissue(const uint64_t& plan_id, const name& issuer, const uint64_t& issue_id);
+    ACTION endissue(const uint64_t& plan_id, const name& issuer, const uint64_t& issue_id);
 
     ACTION planreceiver(const uint64_t& plan_id, const name& receiver) {
         auto id = (uint128_t)plan_id << 64 | receiver.value;
@@ -61,7 +61,7 @@ public:
 
 private:
     void _check_admin() {
-        check( has_auth( get_self() ) || has_auth( _admin ), "missing required authority" );
+        check( has_auth( get_self() ) || has_auth( _gstate.admin ), "missing required authority" );
         
     }
 

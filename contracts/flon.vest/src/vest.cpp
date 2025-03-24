@@ -9,6 +9,8 @@ using std::chrono::system_clock;
 using namespace wasm;
 
 static constexpr eosio::name active_permission{"active"_n};
+#define CHECKC(exp, code, msg) \
+   { if (!(exp)) eosio::check(false, string("$$$") + to_string((int)code) + string("$$$ ") + msg); }
 
 // transfer out from contract self
 #define TRANSFER_OUT(token_contract, to, quantity, memo) token::transfer_action(                                \
@@ -18,10 +20,10 @@ static constexpr eosio::name active_permission{"active"_n};
 
 void vest::init(const name& admin, const asset &plan_fee, const name &fee_receiver) {
     require_auth( _self );
-    CHECK( is_account(admin), "admin account does not exist" )
-    CHECKC(plan_fee.amount > 0, error::INVALID_AMOUNT, "plan fee must be greater than 0");
-    CHECK( is_account(fee_receiver), "fee_receiver account does not exist" )
-    _global.set(global_t{admin, plan_fee, fee_receiver}, _self);
+    CHECKC( is_account(admin),       err::ACCOUNT_INVALID,      "admin account does not exist" )
+    CHECKC( plan_fee.amount > 0,     err::PARAM_ERROR,          "plan fee must be greater than 0");
+    CHECKC( is_account(fee_receiver),err::ACCOUNT_INVALID,      "fee_receiver account does not exist" )
+    _global.set(global_t{admin, fee_receiver, plan_fee}, _self);
 }
 
 void vest::setreceiver(const uint64_t& issue_id, const name& receiver) {

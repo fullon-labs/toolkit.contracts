@@ -16,6 +16,30 @@ using std::string;
 // using namespace wasm;
 #define SYMBOL(sym_code, precision) symbol(symbol_code(sym_code), precision)
 
+enum class err: uint8_t {
+    NONE                 = 0,
+    RECORD_NOT_FOUND     = 1,
+    RECORD_EXISTING      = 2,
+    SYMBOL_MISMATCH      = 4,
+    PARAM_ERROR          = 5,
+    MEMO_FORMAT_ERROR    = 6,
+    PAUSED               = 7,
+    NO_AUTH              = 8,
+    NOT_POSITIVE         = 9,
+    NOT_STARTED          = 10,
+    OVERSIZED            = 11,
+    TIME_EXPIRED         = 12,
+    NOTIFY_UNRELATED     = 13,
+    ACTION_REDUNDANT     = 14,
+    ACCOUNT_INVALID      = 15,
+    FEE_INSUFFICIENT     = 16,
+    FIRST_CREATOR        = 17,
+    STATUS_ERROR         = 18,
+    RATE_OVERLOAD        = 19,
+    DATA_MISMATCH        = 20,
+    MISC                 = 255
+ };
+ 
 static constexpr eosio::name active_perm        {"active"_n};
 static constexpr symbol SYS_SYMBOL              = SYMBOL("FLON", 8);
 static constexpr name SYS_BANK                  { "flon.token"_n };
