@@ -12,7 +12,7 @@
 
 namespace flon {
 
-//memo: pubkey: ****
+//memo: pubkey
 void pubkey_token::ontransfer( name from, name to, asset quantity, string memo ){
    if( to != _self ) return;
    if( from == _self ) return;
