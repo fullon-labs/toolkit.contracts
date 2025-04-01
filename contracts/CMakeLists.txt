@@ -11,7 +11,7 @@ option(SYSTEM_BLOCKCHAIN_PARAMETERS
 find_package(flon.cdt)
 
 set(CDT_VERSION_MIN "0.3")
-set(CDT_VERSION_SOFT_MAX "1.0")
+set(CDT_VERSION_SOFT_MAX "5.1")
 # set(CDT_VERSION_HARD_MAX "")
 
 # Check the version of CDT
@@ -47,7 +47,7 @@ set(VOTING_ICON_URI "voting.png#db28cd3db6e62d4509af3644ce7d377329482a14bb4bfaca
 #add_subdirectory(flon.split)
 add_subdirectory(flon.test)
 add_subdirectory(flon.vest)
-
+add_subdirectory(pubkey.token)
 
 if(BUILD_TESTS)
   add_subdirectory(test_contracts)
