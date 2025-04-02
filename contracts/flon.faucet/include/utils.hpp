@@ -5,9 +5,9 @@
 #include <iterator>
 #include <eosio/eosio.hpp>
 #include <eosio/asset.hpp>
+#include <errno.h>
 
 #include "safe.hpp"
-#include "errno.h"
 
 using namespace std;
 
@@ -18,8 +18,6 @@ using namespace std;
 #define PRINT_PROPERTIES(...) eosio::print("{", __VA_ARGS__, "}")
 
 #define CHECK(exp, msg) { if (!(exp)) eosio::check(false, msg); }
-#define CHECKC(exp, code, msg) \
-   { if (!(exp)) eosio::check(false, string("$$$") + to_string((int)code) + string("$$$ ") + msg); }
 
 #ifndef ASSERT
     #define ASSERT(exp) CHECK(exp, #exp)
@@ -107,8 +105,9 @@ bool starts_with(string_view sv, string_view s) {
 }
 
 int64_t to_int64(string_view s, const char* err_title) {
+    errno = 0;
     uint64_t ret = std::strtoll(s.data(), nullptr, 10);
-    CHECK(ret == 0, string(err_title) + ": convert str to int64 error: ");
+    CHECK(errno == 0, string(err_title) + ": convert str to int64 error: " + std::strerror(errno));
     return ret;
 }
 
