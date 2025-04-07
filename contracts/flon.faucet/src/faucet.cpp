@@ -57,6 +57,11 @@ void faucet::_update_account(const name& account)
             row.updated_at = current_time_point();
         });
     } else {
+        //check update_at time
+        // auto now = now();
+        // auto last = system_clock::from_time_t(acct->updated_at.sec_since_epoch());
+        // auto diff = std::chrono::duration_cast<std::chrono::seconds>(now - last).count();
+        // CHECKC (diff > 60*60*24, err::RATE_OVERLOAD, "Please wait for 1 day before claiming again");
         account_tbl.modify(acct, get_self(), [&](auto& row) {
             row.updated_at = current_time_point();
         });
