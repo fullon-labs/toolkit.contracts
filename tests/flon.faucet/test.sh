@@ -6,4 +6,4 @@ tcli set account permission $con active --add-code
 
 
 
-tpush $con active '["aaaab", "FU6qouWrm3hKL9aCm9n4qkgmBPua14aXZVZM8TJjPJDWXPADHmX4"]' -p flon
+tpush $con active '["aaaabbbbcccc", "FU6qouWrm3hKL9aCm9n4qkgmBPua14aXZVZM8TJjPJDWXPADHmX4"]' -p flon
