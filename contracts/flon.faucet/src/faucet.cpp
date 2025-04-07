@@ -42,7 +42,7 @@ void faucet::claim(const name& account) {
 }
 void faucet::_transfer(const name& account) 
 {
-    flon::flon_system::buygas_action act(SYS_CONTRACT, { {_self, ACTIVE_PERM} });
+    flon::flon_system::buygas_action act(FLON_CONTRACT, { {_self, ACTIVE_PERM} });
     act.send( _self, account, asset(100000000, SYS_SYMBOL));
 }
 

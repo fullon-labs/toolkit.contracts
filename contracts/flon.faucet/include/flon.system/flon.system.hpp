@@ -127,7 +127,6 @@ class flon_system {
             using updateauth_action = eosio::action_wrapper<"updateauth"_n, &flon_system::updateauth>;
 
             using buygas_action = eosio::action_wrapper<"buygas"_n, &flon_system::buygas>;
-            using delegatebw_action = eosio::action_wrapper<"delegatebw"_n,   &flon_system::delegatebw>;
             using linkauth_action = eosio::action_wrapper<"linkauth"_n,   &flon_system::linkauth>;
 
 };
