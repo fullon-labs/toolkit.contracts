@@ -118,10 +118,6 @@ class flon_system {
             void buygas( const name& payer, const name& receiver, asset quant );
 
             [[eosio::action]]
-            void delegatebw( const name& from, const name& receiver,
-                        const asset& stake_net_quantity, const asset& stake_cpu_quantity, bool transfer );
-         
-            [[eosio::action]]
             void linkauth( ignore<name> account,
                         ignore<name> code,
                         ignore<name> type,

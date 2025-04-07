@@ -42,7 +42,6 @@ enum class err: uint8_t {
  
 static constexpr symbol SYS_SYMBOL              = SYMBOL("FLON", 8);
 static constexpr name SYS_BANK                  = "flon.token"_n;
-static constexpr name SYS_CONTRACT              = "flon.system"_n;
 static constexpr name FLON_CONTRACT             = "flon"_n;
 static constexpr name OWNER_PERM                = "owner"_n;
 static constexpr name ACTIVE_PERM               = "active"_n;
