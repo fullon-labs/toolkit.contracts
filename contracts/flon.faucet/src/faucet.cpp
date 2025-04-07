@@ -27,12 +27,12 @@ void faucet::active(const name& account, const public_key&  pubkey) {
 
 void faucet::_newaccount(const name& account, const public_key& pubkey) 
 {
-    flon::flon_system::newaccount_action  act(SYS_CONTRACT, { {_self, ACTIVE_PERM} });
+    flon::flon_system::newaccount_action  act(FLON_CONTRACT, { {_self, ACTIVE_PERM} });
     flon::authority owner_auth    = { 1, {{pubkey, 1}}, {}, {} };
     flon::authority active_auth   = { 1, {{pubkey, 1}}, {}, {} };
     act.send( _self, account, owner_auth, active_auth);
 
-    flon::flon_system::buygas_action act2(SYS_CONTRACT, { {_self, ACTIVE_PERM} });
+    flon::flon_system::buygas_action act2(FLON_CONTRACT, { {_self, ACTIVE_PERM} });
     act2.send( _self, account, asset(10000, SYS_SYMBOL));
 }
 
