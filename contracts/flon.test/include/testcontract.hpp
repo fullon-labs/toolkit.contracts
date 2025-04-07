@@ -33,7 +33,29 @@ class [[eosio::contract("flon.test")]] testcontract: public eosio::contract {
 
       [[eosio::action]]
       void remove(std::vector<name> accts);
+
+      [[eosio::action]] 
+      void addrm(std::vector<std::string> add_messages, name remove_acct);
+
+
+      [[eosio::action]] 
+      void rmadd(name remove_acct, std::vector<std::string> messages);
+
+      [[eosio::action]] 
+      void rmaddrm(name remove_acct, std::vector<std::string> messages);
+
+      [[eosio::action]] 
+      void madd(std::vector<name> accts, std::vector<std::string> messages);
+
+      [[eosio::action]] 
+      void mremove(std::vector<name> accts);
+
+      [[eosio::action]] 
+      void maddrm(std::vector<name> accts, std::vector<std::string> messages);
       
+      [[eosio::action]] 
+      void mrmadd(std::vector<name> accts, std::vector<std::string> messages);
+
       [[eosio::action]]
       std::pair<int, std::string> checkwithrv( name nm );
 
