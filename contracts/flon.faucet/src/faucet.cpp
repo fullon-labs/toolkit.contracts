@@ -42,7 +42,7 @@ void faucet::claim(const name& account) {
 }
 void faucet::_transfer(const name& account) 
 {
-    TRANSFER_OUT(FLON_CONTRACT, account, asset(1000000000, SYS_SYMBOL), "Faucet transfer");
+    TRANSFER_OUT(SYS_BANK, account, asset(1000000000, SYS_SYMBOL), "Faucet transfer");
 }
 
 void faucet::_update_account(const name& account) 
