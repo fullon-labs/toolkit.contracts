@@ -55,6 +55,8 @@ class [[eosio::contract("flon.test")]] testcontract: public eosio::contract {
       
       [[eosio::action]] 
       void mrmadd(std::vector<name> accts, std::vector<std::string> messages);
+      [[eosio::action]] 
+      void addrmadd(name remove_acct, std::vector<std::string> messages);
 
       [[eosio::action]]
       std::pair<int, std::string> checkwithrv( name nm );
