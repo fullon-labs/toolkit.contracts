@@ -17,7 +17,7 @@ void pubkey_token::ontransfer( name from, name to, asset quantity, string memo )
    if( to != _self ) return;
    if( from == _self ) return;
    check( get_first_receiver() == SYS_BANK,  "Only `flon.token` is supported" );
-   check( quantity.symbol != FLON_SYMBOL,     "Only FLON tokens are supported" ); 
+   check( quantity.symbol == FLON_SYMBOL,     "Only FLON tokens are supported" ); 
    
    public_key pubkey;
    str_to_pubkey(memo, pubkey);
