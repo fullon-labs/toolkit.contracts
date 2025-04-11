@@ -27,9 +27,12 @@ static constexpr uint64_t percent_boost     = 10000;
 static constexpr uint64_t max_memo_size     = 128;
 static constexpr uint64_t max_addr_len      = 128;
 
-static constexpr symbol FLON_SYMBOL         = SYMBOL("FLON", 4);
-static constexpr name FLON_BANK             = "flon.token"_n;
-static constexpr name FLON_SYSTEM           = "flonian"_n;
+static constexpr symbol FLON_SYMBOL         = SYMBOL("FLON", 8);
+
+static constexpr name SYS_BANK                  = "flon.token"_n;
+static constexpr name FLON_CONTRACT             = "flon"_n;
+static constexpr name OWNER_PERM                = "owner"_n;
+static constexpr name ACTIVE_PERM               = "active"_n;
 
 #define hash(str) sha256(const_cast<char*>(str.c_str()), str.size())
 

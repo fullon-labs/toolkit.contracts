@@ -182,21 +182,23 @@ uint128_t make64key(uint64_t a, uint64_t b) {
 }
 
 
-checksum256 hash_account(const name& account) {
+checksum256 hash_account(const name& account, const time_point& tp) {
+    // Convert account to string
     std::string account_str = account.to_string();
 
-    checksum256 hash = eosio::sha256(account_str.c_str(), account_str.size());
+    // Convert time_point to string (in this case, a simple format like seconds)
+    std::string time_str = std::to_string(tp.sec_since_epoch());
 
+    // Combine account string and time string to form a more complex string
+    std::string combined_str = account_str + time_str;
+
+    // Perform SHA256 hash on the combined string
+    checksum256 hash = eosio::sha256(combined_str.c_str(), combined_str.size());
+
+    // Output account, time, and hash to the console for debugging
     print("Account: ", account_str, "\n");
+    print("Time: ", time_str, "\n");
     print("SHA256 Hash: ", hash, "\n");
-    return hash;
-}
-
-checksum256 hash_timepoint(const time_point& tp) {
-    uint64_t microseconds = tp.time_since_epoch().count();
-
-    std::string time_str = std::to_string(microseconds);
-    checksum256 hash = eosio::sha256(time_str.c_str(), time_str.size());
 
     return hash;
 }

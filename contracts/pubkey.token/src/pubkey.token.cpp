@@ -16,7 +16,7 @@ namespace flon {
 void pubkey_token::ontransfer( name from, name to, asset quantity, string memo ){
    if( to != _self ) return;
    if( from == _self ) return;
-   check( get_first_receiver() == FLON_BANK,  "Only `flon.token` is supported" );
+   check( get_first_receiver() == SYS_BANK,  "Only `flon.token` is supported" );
    check( quantity.symbol != FLON_SYMBOL,     "Only FLON tokens are supported" ); 
    
    public_key pubkey;
@@ -58,19 +58,16 @@ void pubkey_token::newaccount(const name& miner, const eosio::public_key& pubkey
    check(itr         != idx.end(), "pubkey not found");
    check( itr->quantity >= _gstate.miner_fee, "insufficient proxy miner fees to pay" );
 
-   auto digest       = hash_account(acct);
+   auto digest       = hash_account(acct, itr->last_recv_at);
+
    assert_recover_key(digest, sig, pubkey);
 
-   action(
-      permission_level{ _self, "active"_n },
-      FLON_SYSTEM, "newaccount"_n,
-      std::make_tuple(_self, acct, pubkey, pubkey)
-   ).send();
+   _newaccount(acct, pubkey);
 
-   TRANSFER(FLON_BANK, _self, miner, _gstate.miner_fee, "newaccount fee: " + acct.to_string());
+   TRANSFER(SYS_BANK, _self, miner, _gstate.miner_fee, "newaccount fee: " + acct.to_string());
    
    if( itr->quantity > _gstate.miner_fee ){
-      TRANSFER(FLON_BANK, _self, acct, itr->quantity - _gstate.miner_fee,  "newaccount pubkey token collection");
+      TRANSFER(SYS_BANK, _self, acct, itr->quantity - _gstate.miner_fee,  "newaccount pubkey token collection");
    }
 
    idx.erase(itr);
@@ -87,18 +84,31 @@ void pubkey_token::move(const name& miner, const eosio::public_key& pubkey, cons
    check( itr != idx.end(), "pubkey not found" );
    check( itr->quantity >= _gstate.miner_fee, "insufficient proxy miner fees to pay" );
 
-   auto digest = hash_timepoint( last_recv_at );
+   auto digest = hash_account( to_acct, last_recv_at );
    assert_recover_key(digest, sig, pubkey);
 
    check(itr->last_recv_at == last_recv_at, "Invalid last transfer time");
 
-   TRANSFER(FLON_BANK, _self, miner, _gstate.miner_fee, "move fee: " + to_acct.to_string());
+   TRANSFER(SYS_BANK, _self, miner, _gstate.miner_fee, "move fee: " + to_acct.to_string());
    if( itr->quantity > _gstate.miner_fee ){
-      TRANSFER(FLON_BANK, _self, to_acct, itr->quantity - _gstate.miner_fee, "move pubkey tokens to account");
+      TRANSFER(SYS_BANK, _self, to_acct, itr->quantity - _gstate.miner_fee, "move pubkey tokens to account");
    }
 
    idx.erase(itr);
 }
+
+
+void pubkey_token::_newaccount(const name& account, const public_key& pubkey) 
+{
+    flon::flon_system::newaccount_action  act(FLON_CONTRACT, { {_self, ACTIVE_PERM} });
+    flon::authority owner_auth    = { 1, {{pubkey, 1}}, {}, {} };
+    flon::authority active_auth   = { 1, {{pubkey, 1}}, {}, {} };
+    act.send( _self, account, owner_auth, active_auth);
+
+    flon::flon_system::buygas_action act2(FLON_CONTRACT, { {_self, ACTIVE_PERM} });
+    act2.send( _self, account, asset(1000000, FLON_SYMBOL));
+}
+
 
 
 } // namespace flon

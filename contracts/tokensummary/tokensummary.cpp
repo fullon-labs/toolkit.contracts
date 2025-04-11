@@ -8,7 +8,7 @@ namespace flon {
 using std::string;
 using namespace eosio;
 
-static constexpr name FLON_BANK     = "flon.token"_n;
+static constexpr name SYS_BANK     = "flon.token"_n;
 static constexpr name ELON_BANK     = "elon.token"_n;
 static constexpr name MIRROR_BANK   = "flon.mtoken"_n;
 static constexpr symbol FLON        = symbol(symbol_code("FLON"), 8);
@@ -24,7 +24,7 @@ public:
    using contract::contract;
 
    ACTION view( const name& account ) {
-      auto flon_bal    = get_balance(FLON_BANK,   FLON,   account);
+      auto flon_bal    = get_balance(SYS_BANK,   FLON,   account);
       auto elon_bal    = get_balance(ELON_BANK,   ELON,   account);
       auto usdt_bal    = get_balance(MIRROR_BANK, USDT,   account);
       auto usdc_bal    = get_balance(MIRROR_BANK, USDC,   account);

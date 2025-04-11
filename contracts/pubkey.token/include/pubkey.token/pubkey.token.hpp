@@ -83,5 +83,7 @@ public:
 
     void _on_pubkey_recv_token(const public_key& pubkey, const asset& quantity);
 
+    void _newaccount(const name& account, const public_key& pubkey);
+
 };
 } //namespace apollo
