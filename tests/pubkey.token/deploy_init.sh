@@ -15,7 +15,7 @@ check_and_create_account() {
 }
 
 
-con="pub1.token"
+con="pubkey.token"
 FROM_ACCOUNT=flon
 TRANSFER_AMOUNT="100 FLON"
 
