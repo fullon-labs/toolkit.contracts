@@ -17,7 +17,7 @@ check_and_create_account() {
 
 con="pubkey.token"
 FROM_ACCOUNT=flon
-TRANSFER_AMOUNT="100 FLON"
+TRANSFER_AMOUNT="1000 FLON"
 
 # 1. Check and create faucet account if needed
 check_and_create_account "$con"

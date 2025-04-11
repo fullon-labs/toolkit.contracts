@@ -67,16 +67,16 @@ void testcontract::update(name acct, uint64_t id, std::string msg) {
 void testcontract::addrm(std::vector<std::string> add_messages, name remove_acct) {
    require_auth(remove_acct);
    plan_t::idx_t plans(_self, remove_acct.value);
-   auto itr = plans.begin();
-   while (itr != plans.end()) {
-      itr = plans.erase(itr);
-   }
    for (auto msg : add_messages) {
       plans.emplace(remove_acct, [&](auto& item) {
          item.id = plans.available_primary_key();
          item.account = remove_acct;
          item.msg = msg;
       });
+   }
+   auto itr = plans.begin();
+   while (itr != plans.end()) {
+      itr = plans.erase(itr);
    }
 }
 
@@ -112,7 +112,40 @@ void testcontract::rmaddrm(name remove_acct, std::vector<std::string> messages) 
          item.msg = msg;
       });
    }
+   itr = plans.begin();
+   while (itr != plans.end()) {
+      itr = plans.erase(itr);
+   }
 }
+
+
+
+[[eosio::action]]
+void testcontract::addrmadd(name remove_acct, std::vector<std::string> messages) {
+   require_auth(remove_acct);
+   plan_t::idx_t plans(_self, remove_acct.value);
+   for (auto msg : messages) {
+      plans.emplace(remove_acct, [&](auto& item) {
+         item.id = plans.available_primary_key();
+         item.account = remove_acct;
+         item.msg = msg;
+      });
+   }
+   auto itr = plans.begin();
+   while (itr != plans.end()) {
+      itr = plans.erase(itr);
+   }
+   for (auto msg : messages) {
+      plans.emplace(remove_acct, [&](auto& item) {
+         item.id = plans.available_primary_key();
+         item.account = remove_acct;
+         item.msg = msg;
+      });
+   }
+   
+}
+
+
 
 [[eosio::action]]
 void testcontract::madd(std::vector<name> accts, std::vector<std::string> messages) {
@@ -145,16 +178,17 @@ void testcontract::maddrm(std::vector<name> accts, std::vector<std::string> mess
    for (auto acct : accts) {
       require_auth(acct);
       plan_t::idx_t plans(_self, acct.value);
-      auto itr = plans.begin();
-      while (itr != plans.end()) {
-         itr = plans.erase(itr);
-      }
+      
       for (auto msg : messages) {
          plans.emplace(acct, [&](auto& item) {
             item.id = plans.available_primary_key();
             item.account = acct;
             item.msg = msg;
          });
+      }
+      auto itr = plans.begin();
+      while (itr != plans.end()) {
+         itr = plans.erase(itr);
       }
    }
 }
