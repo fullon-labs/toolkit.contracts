@@ -33,6 +33,6 @@ sleep 1
 
 # 4. Add permission to allow contract code execution
 echo "🔐 Granting contract execution permission"
-$TCLI set account permission "$con" active --add-code
+tcli set account permission "$con" active --add-code
 
 echo "✅ Faucet contract initialization completed"
