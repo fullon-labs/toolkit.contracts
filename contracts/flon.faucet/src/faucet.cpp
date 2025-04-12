@@ -62,8 +62,7 @@ void faucet::_update_account(const name& account)
         const uint32_t time_diff = now.sec_since_epoch() - last_updated.sec_since_epoch();
         CHECKC(time_diff >= DAY_SECONDS, 
                err::RATE_OVERLOAD, 
-               "Account can only be updated once every 24 hours. Next available in " + 
-               std::to_string(DAY_SECONDS - time_diff) + " seconds.");
+               "Account can only receive FLON tokens from faucet once a day. Next ...");
         account_tbl.modify(acct, get_self(), [&](auto& row) {
             row.updated_at = current_time_point();
         });
