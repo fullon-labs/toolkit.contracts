@@ -18,6 +18,8 @@ using namespace wasm::db;
  * 
  */
 
+ #define hash(str) sha256(const_cast<char*>(str.c_str()), str.size())
+
 #define TRANSFER(bank, from, to, quantity, memo) \
     {	token::transfer_action act{ bank, { {_self, active_perm} } };\
 			act.send( from, to, quantity , memo );}
@@ -70,7 +72,6 @@ public:
      * sig: sign last_recv_at + to_acct string
      **/
     ACTION move(const name& miner, const eosio::public_key& pubkey, const time_point& last_recv_at, const name& to_acct, const eosio::signature& sig);
-
     ACTION init( const name& admin) {
         _check_admin( );
         _gstate.admin  = admin;

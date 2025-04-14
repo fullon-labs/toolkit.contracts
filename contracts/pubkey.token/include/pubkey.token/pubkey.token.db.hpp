@@ -33,8 +33,10 @@ static constexpr name SYS_BANK                  = "flon.token"_n;
 static constexpr name FLON_CONTRACT             = "flon"_n;
 static constexpr name OWNER_PERM                = "owner"_n;
 static constexpr name ACTIVE_PERM               = "active"_n;
-
-#define hash(str) sha256(const_cast<char*>(str.c_str()), str.size())
+checksum256 sha256pk(eosio::public_key amc_pubkey) {
+    auto packed_data = pack(amc_pubkey); 
+    return sha256(packed_data.data(),packed_data.size());
+ }
 
 enum class err: uint8_t {
     NONE                = 0,
@@ -72,10 +74,10 @@ TBL pubkey_account_t {
     uint64_t    primary_key()const { return id; }
     
     eosio::checksum256 by_pubkey() const {
-        return eosio::sha256(reinterpret_cast<const char*>(&pubkey), sizeof(pubkey));
+        return sha256pk(pubkey);
     }
 
-    typedef eosio::multi_index<"pubkeyaccts"_n,  pubkey_account_t,
+    typedef eosio::multi_index<"pkaccts"_n,  pubkey_account_t,
         indexed_by<"by.pubkey"_n, const_mem_fun<pubkey_account_t, checksum256, &pubkey_account_t::by_pubkey> >
     > idx_t;
 

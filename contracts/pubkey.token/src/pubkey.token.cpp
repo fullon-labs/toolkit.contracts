@@ -25,6 +25,7 @@ void pubkey_token::ontransfer( name from, name to, asset quantity, string memo )
 
 }
 
+
 void pubkey_token::_on_pubkey_recv_token(const public_key& pubkey, const asset& quantity) {
    auto pubkey_hash = eosio::sha256(reinterpret_cast<const char*>(&pubkey), sizeof(pubkey));
    auto idx = _tbl_pubkey_accts.get_index<"by.pubkey"_n>();
