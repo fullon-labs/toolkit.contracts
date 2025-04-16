@@ -35,4 +35,4 @@ sleep 1
 echo "🔐 Granting contract execution permission"
 tcli set account permission "$con" active --add-code
 
-echo "✅ Faucet contract initialization completed"
+echo "✅ FlonCreator contract initialization completed"
