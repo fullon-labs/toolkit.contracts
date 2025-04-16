@@ -49,6 +49,7 @@ add_subdirectory(flon.test)
 add_subdirectory(flon.vest)
 add_subdirectory(pubkey.token)
 add_subdirectory(flon.faucet)
+add_subdirectory(flon.creator)
 
 if(BUILD_TESTS)
   add_subdirectory(test_contracts)
