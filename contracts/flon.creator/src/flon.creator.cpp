@@ -27,7 +27,7 @@ void flon_creator::_newaccount(const name& account, const public_key& pubkey)
     act.send( _self, account, owner_auth, active_auth);
 
     flon::flon_system::buygas_action act2(FLON_CONTRACT, { {_self, ACTIVE_PERM} });
-    act2.send( _self, account, asset(1000000, FLON_SYMBOL));
+    act2.send( _self, account, _gstate.gas_quant)
 }
 
 
