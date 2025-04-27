@@ -49,7 +49,7 @@ enum class err: uint8_t {
 #define TBL struct [[eosio::table, eosio::contract("flon.creator")]]
 
 struct [[eosio::table("global"), eosio::contract("flon.creator")]] global_t {
-    name        admin       = "trustguardian"_n;                 
+    name        admin       = "securewarden"_n;                 
     asset       gas_quant   = asset(300000, FLON_SYMBOL);
 
     EOSLIB_SERIALIZE( global_t, (admin)(gas_quant) )
