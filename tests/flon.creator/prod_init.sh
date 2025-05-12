@@ -12,8 +12,8 @@ TRANSFER_AMOUNT="1000 FLON"
 # 检查账号是否存在
 mcli get account "$con"
 
-admin_pk=FUxxxx
-con_pk=FUxxxx2
+admin_pk=
+con_pk=
 mreg flon securewarden $admin_pk
 mreg flon "$con" $con_pk
 
