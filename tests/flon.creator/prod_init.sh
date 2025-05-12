@@ -12,9 +12,10 @@ TRANSFER_AMOUNT="1000 FLON"
 # 检查账号是否存在
 mcli get account "$con"
 
-
-mreg flon securewarden pubkey
-mreg flon "$con" pubkey
+admin_pk=FUxxxx
+con_pk=FUxxxx2
+mreg flon securewarden $admin_pk
+mreg flon "$con" $con_pk
 
 #mnew securewarden
 #mnew "$con"
