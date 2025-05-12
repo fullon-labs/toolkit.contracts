@@ -12,12 +12,12 @@ TRANSFER_AMOUNT="1000 FLON"
 # 检查账号是否存在
 mcli get account "$con"
 
-# 如果账号不存在则创建（你得自己判断上一步是否出错）
-# mreg flon securewarden
-# mreg flon "$con" 
 
-mnew securewarden
-mnew "$con"
+mreg flon securewarden pubkey
+mreg flon "$con" pubkey
+
+#mnew securewarden
+#mnew "$con"
 sleep 1
 
 # 部署合约代码
