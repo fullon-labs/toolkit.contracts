@@ -30,7 +30,5 @@ void flon_creator::_newaccount(const name& account, const public_key& pubkey)
     act2.send( _self, account, _gstate.gas_quant);
 }
 
-
-
 } // namespace flon
 

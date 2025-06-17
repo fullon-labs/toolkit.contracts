@@ -42,8 +42,8 @@ void vest::setreceiver(const uint64_t& issue_id, const name& receiver) {
  * add a new plan
  */
 void vest::addplan(const name& owner,
-                                        const string& title, const name& asset_contract, const symbol& asset_symbol,
-                                        const uint64_t& unlock_interval_days, const int64_t& unlock_times)
+            const string& title, const name& asset_contract, const symbol& asset_symbol,
+            const uint64_t& unlock_interval_days, const int64_t& unlock_times)
 {
     require_auth(owner);
     CHECK( title.size() <= MAX_TITLE_SIZE, "title size must be <= " + to_string(MAX_TITLE_SIZE) )
@@ -220,7 +220,7 @@ void vest::ontransfer(name from, name to, asset quantity, string memo) {
 
 [[eosio::action]]
 void vest::endissue(const uint64_t& plan_id, const name& issuer, const uint64_t& issue_id) {
-    CHECK(has_auth( _self ) || has_auth( issuer ) || has_auth( "flonianadmin"_n ), "not authorized to end issue" )
+    CHECK(has_auth( _self ) || has_auth( issuer ) || has_auth( "flonian"_n ), "not authorized to end issue" )
     // require_auth( issuer );
 
     issue_t::tbl_t issue_tbl(get_self(), get_self().value);
