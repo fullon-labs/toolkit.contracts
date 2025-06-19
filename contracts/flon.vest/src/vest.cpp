@@ -21,7 +21,6 @@ static constexpr eosio::name active_permission{"active"_n};
 void vest::init(const name& admin, const asset &plan_fee, const name &fee_receiver) {
     require_auth( _self );
     CHECKC( is_account(admin),       err::ACCOUNT_INVALID,      "admin account does not exist" )
-    CHECKC( plan_fee.amount > 0,     err::PARAM_ERROR,          "plan fee must be greater than 0");
     CHECKC( is_account(fee_receiver),err::ACCOUNT_INVALID,      "fee_receiver account does not exist" )
     _global.set(global_t{admin, fee_receiver, plan_fee}, _self);
 }

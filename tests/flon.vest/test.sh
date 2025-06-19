@@ -16,7 +16,7 @@ recv=flonvestrecv  # 实际领取人，可另设
 mcli set account permission $con active --add-code
 
 # 合约初始化: ["admin账户","方案费用 asset", "费用收款账户"]
-mpush $con init '["flonian", "0.01000000 FLON", "flonadmin"]' -p $con@active
+mpush $con init '["flonian", "0.00000000 FLON", "flonadmin"]' -p $con@active
 
 # 创建锁仓方案: [owner, title, asset_contract, asset_symbol, unlock_interval_days, unlock_times]
 mpush $con addplan '["'"${owner}"'", "锁仓FLON一年", "flon.token", "8,FLON", 30, 12]' -p $owner
