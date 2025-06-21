@@ -33,11 +33,10 @@ enum class err: uint8_t {
 };
 
 enum class redpack_type: uint8_t {
-   RANDOM       = 0,
-   MEAN         = 1,
-   DID_RANDOM   = 10,
-   DID_MEAN     = 11
-
+   RANDOM       = 0,    //random
+   MEAN         = 1,    //mean fixed
+   DID_RANDOM   = 10,   //DID random
+   DID_MEAN     = 11    //DID fixed
 };
 
 class [[eosio::contract("flon.redpack")]] redpack: public eosio::contract {
@@ -108,4 +107,6 @@ private:
     asset _calc_red_amt(const redpack_t& redpack);
     uint64_t rand(asset max_quantity,  uint16_t min_unit);
 
+    void _handle_deposit(const name& from, const asset& quantity, const vector<string>& parts);
+    void _handle_fee_payment(const asset& quantity, const vector<string>& parts);
 }; //contract redpack
