@@ -50,7 +50,7 @@ void redpack::whitelist(const name& contract, const symbol& sym, const time_poin
     // CHECKC( value > 0, err::SYMBOL_MISMATCH, "symbol mismatch" );
     
     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-    auto tokenlist_index = tokenlist_tbl.get_index<"symcontract"_n>();
+    auto tokenlist_index = tokenlist_tbl.get_index<"by.syscon"_n>();
     uint128_t sec_index = get_unionid(contract, sym.raw());
     auto tokenlist_iter = tokenlist_index.find(sec_index);
     auto found          = tokenlist_iter != tokenlist_index.end();
@@ -110,7 +110,7 @@ void redpack::_token_transfer( const name& from, const name& to, const asset& qu
         name receiver_contract = get_first_receiver();
         
         tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-        auto tokenlist_index = tokenlist_tbl.get_index<"symcontract"_n>();
+        auto tokenlist_index = tokenlist_tbl.get_index<"by.syscon"_n>();
         uint128_t sec_index = get_unionid(receiver_contract, quantity.symbol.raw());
         auto tokenlist_iter = tokenlist_index.find(sec_index);
         CHECKC( tokenlist_iter != tokenlist_index.end(), err::NON_RENEWAL, "non-renewal" );
@@ -172,7 +172,7 @@ void redpack::_token_transfer( const name& from, const name& to, const asset& qu
         CHECKC( value.symbol == redpcak_symbol, err::SYMBOL_MISMATCH, "symbol mismatch" );
         
         tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-        auto tokenlist_index = tokenlist_tbl.get_index<"symcontract"_n>();
+        auto tokenlist_index = tokenlist_tbl.get_index<"by.syscon"_n>();
         uint128_t sec_index = get_unionid(contract, redpcak_symbol.raw());
         auto tokenlist_iter = tokenlist_index.find(sec_index);
         bool found = tokenlist_iter != tokenlist_index.end();
@@ -201,7 +201,7 @@ void redpack::claimredpack( const name& claimer, const name& code, const string&
     auto contract_name = name(pw_hash[1]);
     if (contract_name.length() == 0) {
         tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-        auto tokenlist_index = tokenlist_tbl.get_index<"sym"_n>();
+        auto tokenlist_index = tokenlist_tbl.get_index<"by.sym"_n>();
         auto tokenlist_iter = tokenlist_index.find(redpack.total_quantity.symbol.raw());
         CHECKC( tokenlist_iter != tokenlist_index.end(), err::RECORD_NO_FOUND, "token list not found" );
         contract_name = tokenlist_iter->contract;
@@ -223,7 +223,7 @@ void redpack::claimredpack( const name& claimer, const name& code, const string&
     }
 
     claim_t::idx_t claims(_self, _self.value);
-    auto claims_index = claims.get_index<"unionid"_n>();
+    auto claims_index = claims.get_index<"by.unionid"_n>();
     uint128_t sec_index = get_unionid(claimer, code.value);
     auto claims_iter = claims_index.find(sec_index);
     CHECKC( claims_iter == claims_index.end() ,err::NOT_REPEAT_RECEIVE, "Can't repeat to receive" );
@@ -272,7 +272,7 @@ void redpack::cancel( const name& code )
         auto contract = pw_hash[1];
         if (contract.size() == 0) {
             tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-            auto tokenlist_index = tokenlist_tbl.get_index<"sym"_n>();
+            auto tokenlist_index = tokenlist_tbl.get_index<"by.sym"_n>();
             auto tokenlist_iter = tokenlist_index.find(redpack.total_quantity.symbol.raw());
             CHECKC( tokenlist_iter != tokenlist_index.end(), err::RECORD_NO_FOUND, "token list not found" );
             TRANSFER_OUT(tokenlist_iter->contract, redpack.sender, redpack.remain_quantity, string("red pack cancel transfer"));

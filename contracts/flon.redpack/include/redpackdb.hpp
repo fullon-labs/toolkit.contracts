@@ -104,7 +104,7 @@ struct TG_TBL claim_t {
     // uint64_t by_packid() const { return red_pack_code.value; }
 
     typedef eosio::multi_index<"claims"_n, claim_t,
-        indexed_by<"unionid"_n,  const_mem_fun<claim_t, uint128_t, &claim_t::by_unionid> >
+        indexed_by<"by.unionid"_n,  const_mem_fun<claim_t, uint128_t, &claim_t::by_unionid> >
         // indexed_by<"claimedid"_n,  const_mem_fun<claim_t, uint64_t, &claim_t::by_claimedid> >,
         // indexed_by<"packid"_n,  const_mem_fun<claim_t, uint64_t, &claim_t::by_packid> >,
         // indexed_by<"senderid"_n,  const_mem_fun<claim_t, uint64_t, &claim_t::by_sender> >,
@@ -128,8 +128,8 @@ struct TG_TBL tokenlist_t {
     tokenlist_t( const uint64_t& i ): id(i){}
 
     typedef eosio::multi_index<"tokenlist"_n, tokenlist_t,
-        indexed_by<"symcontract"_n,  const_mem_fun<tokenlist_t, uint128_t, &tokenlist_t::by_symcontract> >,
-        indexed_by<"sym"_n,  const_mem_fun<tokenlist_t, uint64_t, &tokenlist_t::by_sym> >
+        indexed_by<"by.syscon"_n,  const_mem_fun<tokenlist_t, uint128_t, &tokenlist_t::by_symcontract> >,
+        indexed_by<"by.sym"_n,  const_mem_fun<tokenlist_t, uint64_t, &tokenlist_t::by_sym> >
     > idx_t;
 
     EOSLIB_SERIALIZE( tokenlist_t, (id)(sym)(contract)(expired_time) )
