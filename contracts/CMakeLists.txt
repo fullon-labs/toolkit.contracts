@@ -50,6 +50,8 @@ add_subdirectory(flon.vest)
 add_subdirectory(pubkey.token)
 add_subdirectory(flon.faucet)
 add_subdirectory(flon.creator)
+add_subdirectory(did.ntoken)
+add_subdirectory(flon.redpack)
 
 if(BUILD_TESTS)
   add_subdirectory(test_contracts)
