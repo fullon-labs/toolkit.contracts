@@ -47,11 +47,6 @@ struct TG_TBL_NAME("global") global_t {
 };
 typedef eosio::singleton< "global"_n, global_t > global_singleton;
 
-namespace redpack_status {
-    static constexpr eosio::name CREATED        = "created"_n;
-    static constexpr eosio::name FINISHED       = "finished"_n;
-    static constexpr eosio::name CANCELLED      = "cancelled"_n;
-};
 
 uint128_t get_unionid( const name& rec, uint64_t packid ) {
      return ( (uint128_t) rec.value << 64 ) | packid;
@@ -59,15 +54,14 @@ uint128_t get_unionid( const name& rec, uint64_t packid ) {
 
 struct TG_TBL redpack_t {
     name            code;
-    name            sender;
+    name            type;  //0 random,1 mean fixed, 10: DID random, 11: DID fixed
+    name            creator;
     string          pw_hash;
     asset           total_quantity;
     uint64_t        receiver_count;
     asset           remain_quantity;
-    uint64_t        remain_count         = 0;
-    asset           fee;
+    uint64_t        remain_count      = 0;
     name            status;
-    uint16_t        type;  //0 random,1 mean fixed, 10: DID random, 11: DID fixed
     time_point      created_at;
     time_point      updated_at;
 
@@ -84,15 +78,15 @@ struct TG_TBL redpack_t {
         // indexed_by<"senderid"_n,  const_mem_fun<redpack_t, uint64_t, &redpack_t::by_sender> >
     > idx_t;
 
-    EOSLIB_SERIALIZE( redpack_t, (code)(sender)(pw_hash)(total_quantity)(receiver_count)(remain_quantity)
-                                 (remain_count)(fee)(status)(type)(created_at)(updated_at) )
+    EOSLIB_SERIALIZE( redpack_t, (code)(type)(creator)(pw_hash)(total_quantity)(receiver_count)(remain_quantity)
+                                 (remain_count)(status)(created_at)(updated_at) )
 };
 
 struct TG_TBL claim_t {
     uint64_t        id;
     name            red_pack_code;
-    name            sender;                     //plan owner
-    name            receiver;                      //plan title: <=64 chars
+    name            creator;                        //creator
+    name            receiver;                       //plan title: <=64 chars
     asset           quantity;             //asset issuing contract (ARC20)
     time_point      claimed_at;                 //update time: last updated at
     uint64_t primary_key() const { return id; }
@@ -110,7 +104,7 @@ struct TG_TBL claim_t {
         // indexed_by<"receiverid"_n,  const_mem_fun<claim_t, uint64_t, &claim_t::by_receiver> >
     > idx_t;
 
-    EOSLIB_SERIALIZE( claim_t, (id)(red_pack_code)(sender)(receiver)(quantity)(claimed_at) )
+    EOSLIB_SERIALIZE( claim_t, (id)(red_pack_code)(creator)(receiver)(quantity)(claimed_at) )
 };
 
 struct TG_TBL tokenlist_t {

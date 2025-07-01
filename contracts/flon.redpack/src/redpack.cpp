@@ -113,13 +113,13 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
     CHECKC(!_db.get(redpack), err::RED_PACK_EXIST, "code is already exists");
 
     int count = stoi(parts[1]);
-    auto rp_type = (redpack_type) stoi(parts[2]);
-    CHECKC(rp_type == redpack_type::RANDOM || rp_type == redpack_type::MEAN ||
-           rp_type == redpack_type::DID_RANDOM || rp_type == redpack_type::DID_MEAN,
+    auto rp_type = name(stoi(parts[2]));
+    CHECKC(rp_type == RedpackType::RANDOM || rp_type == RedpackType::MEAN ||
+           rp_type == RedpackType::RANDOM_DID || rp_type == RedpackType::MEAN_DID,
            err::TYPE_INVALID, "redpack type invalid");
 
     auto symb = quantity.symbol.code().to_string();
-    bool is_did_type = (rp_type == redpack_type::DID_RANDOM || rp_type == redpack_type::DID_MEAN);
+    bool is_did_type = (rp_type == RedpackType::RANDOM_DID || rp_type == RedpackType::MEAN_DID);
 
     if (is_did_type) {
         CHECKC(_gstate.did_supported, err::UNDER_MAINTENANCE, "did redpack not enabled");
@@ -135,14 +135,14 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
     auto now = current_time_point();
     redpacks.emplace(_self, [&](auto& row) {
         row.code            = code;
-        row.sender          = from;
+        row.type            = rp_type;
+        row.creator         = from;
         row.pw_hash         = parts[0] + ":" + get_first_receiver().to_string();
         row.total_quantity  = quantity;
         row.receiver_count  = count;
         row.remain_quantity = quantity;
         row.remain_count    = count;
         row.status          = redpack_status::CREATED;
-        row.type            = (uint16_t)rp_type;
         row.created_at      = now;
         row.updated_at      = now;
     });
@@ -202,7 +202,7 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
 
     // 6. 若是 DID 类型红包，需要做 DID 认证校验
     bool is_auth = false;
-    if ((redpack_type)redpack.type == redpack_type::DID_RANDOM || (redpack_type)redpack.type == redpack_type::DID_MEAN) {
+    if ( redpack.type == RedpackType::RANDOM_DID || redpack.type == RedpackType::MEAN_DID) {
         auto claimer_acnts = flon::account_t::idx_t(_gstate.did_contract, claimer.value);
         for (auto claimer_acnts_iter = claimer_acnts.begin(); claimer_acnts_iter != claimer_acnts.end(); ++claimer_acnts_iter) {
             if (claimer_acnts_iter->balance.amount > 0) {
@@ -222,13 +222,14 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
 
     // 8. 计算本次可领取红包数量（支持随机、均分模式）
     asset redpack_quantity;
-    switch ((redpack_type)redpack.type) {
-        case redpack_type::RANDOM:
-        case redpack_type::DID_RANDOM:
+    switch( redpack.type.value ) {
+        case RedpackType::RANDOM.value:
+        case RedpackType::RANDOM_DID.value:
             _assign_redpack(redpack, redpack_quantity);
             break;
-        case redpack_type::MEAN:
-        case redpack_type::DID_MEAN:
+
+        case RedpackType::MEAN.value:
+        case RedpackType::MEAN_DID.value:
             redpack_quantity = (redpack.remain_count == 1) ? redpack.remain_quantity : redpack.total_quantity / redpack.receiver_count;
             break;
     }
@@ -248,12 +249,12 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     // 11. 插入领取记录
     auto id = claims.available_primary_key();
     claims.emplace(_self, [&](auto& row) {
-        row.id = id;
-        row.red_pack_code = code;
-        row.sender = redpack.sender;
-        row.receiver = claimer;
-        row.quantity = redpack_quantity;
-        row.claimed_at = time_point_sec(current_time_point());
+        row.id              = id;
+        row.red_pack_code   = code;
+        row.creator         = redpack.creator;
+        row.receiver        = claimer;
+        row.quantity        = redpack_quantity;
+        row.claimed_at      = current_time_point();
     });
 }
 
@@ -270,10 +271,10 @@ void redpack::cancel( const name& code )
             auto tokenlist_index = tokenlist_tbl.get_index<"by.sym"_n>();
             auto tokenlist_iter = tokenlist_index.find(redpack.total_quantity.symbol.raw());
             CHECKC( tokenlist_iter != tokenlist_index.end(), err::RECORD_NO_FOUND, "token list not found" );
-            TRANSFER_OUT(tokenlist_iter->contract, redpack.sender, redpack.remain_quantity, string("red pack cancel transfer"));
+            TRANSFER_OUT(tokenlist_iter->contract, redpack.creator, redpack.remain_quantity, string("red pack cancel transfer"));
         } else {
             auto contract_name = name(pw_hash[1]);
-            TRANSFER_OUT(contract_name, redpack.sender, redpack.remain_quantity, string("red pack cancel transfer"));
+            TRANSFER_OUT(contract_name, redpack.creator, redpack.remain_quantity, string("red pack cancel transfer"));
         }
     }
     _db.del(redpack);

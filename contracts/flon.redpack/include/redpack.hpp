@@ -32,12 +32,20 @@ enum class err: uint8_t {
    DID_PACK_SYMBOL_ERR  = 31
 };
 
-enum class redpack_type: uint8_t {
-   RANDOM       = 0,    //random
-   MEAN         = 1,    //mean fixed
-   DID_RANDOM   = 10,   //DID random
-   DID_MEAN     = 11    //DID fixed
+namespace RedpackType {
+   static constexpr eosio::name RANDOM                 { "random"_n          };
+   static constexpr eosio::name RANDOM_DID             { "random.did"_n      };
+
+   static constexpr eosio::name MEAN                   { "mean"_n            };
+   static constexpr eosio::name MEAN_DID               { "mean.did"_n        };
 };
+
+namespace redpack_status {
+    static constexpr eosio::name CREATED        = "created"_n;
+    static constexpr eosio::name FINISHED       = "finished"_n;
+    static constexpr eosio::name CANCELLED      = "cancelled"_n;
+};
+
 
 class [[eosio::contract("flon.redpack")]] redpack: public eosio::contract {
 private:
