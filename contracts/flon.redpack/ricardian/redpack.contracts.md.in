@@ -10,21 +10,6 @@ icon: @ICON_BASE_URL@/@TOKEN_ICON_URI@
 
 initilize & maintain contract states
 
-<h1 class="contract"> addadmin </h1>
-
----
-spec_version: "0.1.0"
-title: Add an admin
-summary: 'Add an admin who can approve advanced plans'
-icon: @ICON_BASE_URL@/@TOKEN_ICON_URI@
----
-
-{{$action.account}} agrees to create a new token with symbol {{asset_to_symbol_code maximum_supply}} to be managed by {{issuer}}.
-
-This action will allow a new admin to be able to approve proposals.
-
-{{issuer}} will be allowed to issue tokens into circulation, up to a maximum supply of {{maximum_supply}}.
-
 
 <h1 class="contract"> delisttoken </h1>
 

@@ -2,7 +2,7 @@ add_contract(flon.creator flon.creator ${CMAKE_CURRENT_SOURCE_DIR}/src/flon.crea
 
 target_include_directories(flon.creator
    PUBLIC
-   ${CMAKE_CURRENT_SOURCE_DIR}/include)
+   ${CMAKE_CURRENT_SOURCE_DIR}/include )
 
 set_target_properties(flon.creator
    PROPERTIES

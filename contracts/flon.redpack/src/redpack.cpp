@@ -115,8 +115,7 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
 
     int count = stoi(parts[1]);
     auto rp_type = name(stoi(parts[2]));
-    CHECKC(rp_type == redpack_type::RANDOM || rp_type == redpack_type::MEAN ||
-           rp_type == redpack_type::RANDOM_DID || rp_type == redpack_type::MEAN_DID,
+    CHECKC(rp_type == redpack_type::RANDOM || rp_type == redpack_type::MEAN || rp_type == redpack_type::RANDOM_DID || rp_type == redpack_type::MEAN_DID,
            err::TYPE_INVALID, "redpack type invalid");
 
     auto symb = quantity.symbol.code().to_string();
@@ -151,7 +150,7 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
 
 void redpack::claimredpack(const name& claimer, const name& code, const string& pwhash)
 {
-    require_auth(_gstate.admin);  // 1. 只有 admin 有权操作
+    // require_auth( _gstate.admin );  // 1. 只有 admin 有权操作
 
     // 2. 读取红包主表，查不到直接抛错
     redpack_t redpack(code);

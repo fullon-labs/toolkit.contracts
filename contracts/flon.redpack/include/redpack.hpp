@@ -33,11 +33,10 @@ enum class err: uint8_t {
 };
 
 namespace redpack_type {
-   static constexpr eosio::name RANDOM                 { "random"_n          };
-   static constexpr eosio::name RANDOM_DID             { "random.did"_n      };
-
-   static constexpr eosio::name MEAN                   { "mean"_n            };
-   static constexpr eosio::name MEAN_DID               { "mean.did"_n        };
+   static constexpr eosio::name RANDOM          = "random"_n;
+   static constexpr eosio::name RANDOM_DID      = "random.did"_n;
+   static constexpr eosio::name MEAN            = "mean"_n;
+   static constexpr eosio::name MEAN_DID        = "mean.did"_n;
 };
 
 namespace redpack_status {
