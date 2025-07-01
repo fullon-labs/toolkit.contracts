@@ -107,10 +107,11 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
     CHECKC(iter != tokenlist_index.end(), err::NON_RENEWAL, "non-renewal");
     CHECKC(iter->expired_time > time_point_sec(current_time_point()), err::NON_RENEWAL, "non-renewal");
 
-    // 业务参数
+
+    // 业务参数 [ $count:$type:$code ]
     name code = name(parts[3]);
     redpack_t redpack(code);
-    CHECKC(!_db.get(redpack), err::RED_PACK_EXIST, "code already exists");
+    CHECKC(!_db.get(redpack), err::REDPACK_EXIST, "code already exists");
 
     int count = stoi(parts[1]);
     auto rp_type = name(stoi(parts[2]));

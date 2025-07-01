@@ -23,7 +23,7 @@ enum class err: uint8_t {
    FEE_NOT_POSITIVE     = 12,
    VAILD_TIME_INVALID   = 13,
    MIN_UNIT_INVALID     = 14,
-   RED_PACK_EXIST       = 15,
+   REDPACK_EXIST       = 15,
    DID_NOT_AUTH         = 16,
    UNDER_MAINTENANCE    = 17,
    NONE_DELETED         = 19,
