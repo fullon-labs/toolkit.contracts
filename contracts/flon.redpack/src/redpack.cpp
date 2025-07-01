@@ -110,7 +110,7 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
     // 业务参数
     name code = name(parts[3]);
     redpack_t redpack(code);
-    CHECKC(!_db.get(redpack), err::RED_PACK_EXIST, "code is already exists");
+    CHECKC(!_db.get(redpack), err::RED_PACK_EXIST, "code already exists");
 
     int count = stoi(parts[1]);
     auto rp_type = name(stoi(parts[2]));
@@ -122,7 +122,7 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
     bool is_did_type = (rp_type == redpack_type::RANDOM_DID || rp_type == redpack_type::MEAN_DID);
 
     if (is_did_type) {
-        CHECKC(_gstate.did_supported, err::UNDER_MAINTENANCE, "did redpack not enabled");
+        CHECKC(_gstate.did_supported, err::UNDER_MAINTENANCE, "did redpack not supported");
         CHECKC(symb == "FLON" || symb == "USDT" || symb == "USDC" || symb == "TYCHE",
                err::DID_PACK_SYMBOL_ERR, "DID redpack tokens can only be FLON|MUSDT|MUSDC|TYCHE");
     } else {
