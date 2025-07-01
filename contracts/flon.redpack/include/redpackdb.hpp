@@ -53,8 +53,8 @@ uint128_t get_unionid( const name& rec, uint64_t packid ) {
 }
 
 struct TG_TBL redpack_t {
-    name            code;
-    name            type;  //0 random,1 mean fixed, 10: DID random, 11: DID fixed
+    name            code;   //PK
+    name            type;   //RANDOM | MEAN | RANDOM_DID | MEAN_DID
     name            creator;
     string          pw_hash;
     asset           total_quantity;
@@ -73,10 +73,10 @@ struct TG_TBL redpack_t {
     redpack_t(){}
     redpack_t( const name& c ): code(c){}
 
-    typedef eosio::multi_index<"redpacks"_n, redpack_t
-        // indexed_by<"updatedid"_n,  const_mem_fun<redpack_t, uint64_t, &redpack_t::by_updatedid> >,
-        // indexed_by<"senderid"_n,  const_mem_fun<redpack_t, uint64_t, &redpack_t::by_sender> >
-    > idx_t;
+    // typedef eosio::multi_index<"redpacks"_n, redpack_t
+    //     // indexed_by<"updatedid"_n,  const_mem_fun<redpack_t, uint64_t, &redpack_t::by_updatedid> >,
+    //     // indexed_by<"senderid"_n,  const_mem_fun<redpack_t, uint64_t, &redpack_t::by_sender> >
+    // > idx_t;
 
     EOSLIB_SERIALIZE( redpack_t, (code)(type)(creator)(pw_hash)(total_quantity)(receiver_count)(remain_quantity)(remain_count)
                                  (status)(created_at)(updated_at) )

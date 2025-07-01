@@ -151,6 +151,7 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
 void redpack::claimredpack(const name& claimer, const name& code, const string& pwhash)
 {
     // require_auth( _gstate.admin );  // 1. 只有 admin 有权操作
+    CHECKC( has_auth(claimer) || has_auth(_gstate.admin), err::ACCOUNT_INVALID, "auth failed: not claimer nor admin" )
 
     // 2. 读取红包主表，查不到直接抛错
     redpack_t redpack(code);
