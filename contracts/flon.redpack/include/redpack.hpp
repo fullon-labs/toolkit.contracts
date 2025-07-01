@@ -66,19 +66,13 @@ public:
     ACTION deltoken( const uint64_t& token_id );
 
     [[eosio::on_notify("flon.token::transfer")]]
-    void on_atoken_transfer(const name& from, const name& to, const asset& quantity, const string& memo);
+    void on_token_transfer(const name& from, const name& to, const asset& quantity, const string& memo);
 
     [[eosio::on_notify("flon.mtoken::transfer")]]
     void on_mtoken_transfer(const name& from, const name& to, const asset& quantity, const string& memo );
 
-    [[eosio::on_notify("mdao.token::transfer")]]
-    void on_dtoken_transfer(const name& from, const name& to, const asset& quantity, const string& memo );
-
     [[eosio::on_notify("tyche.token::transfer")]] 
     void on_tychetoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo );
-
-    [[eosio::on_notify("airc.token::transfer")]] 
-    void on_armstoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo );
 
 
     ACTION claimredpack( const name& claimer, const name& code, const string& pwhash );
@@ -90,11 +84,11 @@ public:
         CHECKC( is_account(admin), err::ACCOUNT_INVALID, "account invalid" );
         CHECKC( hours > 0, err::VAILD_TIME_INVALID, "valid time must be positive" );
 
-        _gstate.admin = admin;
-        _gstate.expire_hours = hours;
-        _gstate.did_supported = did_supported;
-        _gstate.did_id = did_id;
-        _gstate.did_contract = did_contract;
+        _gstate.admin               = admin;
+        _gstate.expire_hours        = hours;
+        _gstate.did_supported       = did_supported;
+        _gstate.did_id              = did_id;
+        _gstate.did_contract        = did_contract;
     }
 
 private:

@@ -65,7 +65,7 @@ void redpack::whitelist(const name& contract, const symbol& sym, const time_poin
 }
 
 // issue-in op: transfer tokens to the contract and lock them according to the given plan
-void redpack::on_atoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo)
+void redpack::on_token_transfer( const name& from, const name& to, const asset& quantity, const string& memo)
 {
     _token_transfer( from, to, quantity, memo );
 }
@@ -75,17 +75,7 @@ void redpack::on_mtoken_transfer( const name& from, const name& to, const asset&
     _token_transfer( from, to, quantity, memo );
 }
 
-void redpack::on_dtoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo)
-{
-    _token_transfer( from, to, quantity, memo );
-}
-
 void redpack::on_tychetoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo) 
-{ 
-    _token_transfer( from, to, quantity, memo ); 
-}
-
-void redpack::on_armstoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo) 
 { 
     _token_transfer( from, to, quantity, memo ); 
 }
