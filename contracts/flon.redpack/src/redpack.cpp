@@ -225,7 +225,7 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     switch ((redpack_type)redpack.type) {
         case redpack_type::RANDOM:
         case redpack_type::DID_RANDOM:
-            redpack_quantity = _calc_red_amt(redpack);
+            _assign_redpack(redpack, redpack_quantity);
             break;
         case redpack_type::MEAN:
         case redpack_type::DID_MEAN:
@@ -315,23 +315,24 @@ void redpack::delclaims( const uint64_t& max_rows )
 //     return asset(value, fee.symbol);
 // }
 
-asset redpack::_calc_red_amt(const redpack_t& redpack) {
+void redpack::_assign_redpack(const redpack_t& redpack, asset& assigned) {
     // calc order quantity value by price
     if ( redpack.remain_count == 1 ) {
-        return redpack.remain_quantity;
-    } else {
-        uint64_t quantity = redpack.remain_quantity.amount / redpack.remain_count * 2;
-        uint8_t precision = 0;
-        if (redpack.remain_quantity.symbol.precision() <= 2)
-            precision = 0;
-        else
-            precision = redpack.remain_quantity.symbol.precision() - 2;
-
-        return asset(rand(asset(quantity, redpack.remain_quantity.symbol), precision), redpack.remain_quantity.symbol);
+        assigned = redpack.remain_quantity;
+        return;
     }
+
+    uint64_t quantity = redpack.remain_quantity.amount / redpack.remain_count * 2;
+    uint8_t precision = 0;
+    if (redpack.remain_quantity.symbol.precision() <= 2)
+        precision = 0;
+    else
+        precision = redpack.remain_quantity.symbol.precision() - 2;
+
+    assigned = asset( _rand(asset(quantity, redpack.remain_quantity.symbol), precision), redpack.remain_quantity.symbol );
 }
 
-uint64_t redpack::rand(asset max_quantity,  uint16_t min_unit) {
+uint64_t redpack::_rand(asset max_quantity,  uint16_t min_unit) {
     auto mixedBlock = tapos_block_prefix() * tapos_block_num();
     const char *mixedChar = reinterpret_cast<const char *>(&mixedBlock);
     auto hash = sha256( (char *)mixedChar, sizeof(mixedChar));
@@ -340,11 +341,10 @@ uint64_t redpack::rand(asset max_quantity,  uint16_t min_unit) {
     auto r1 = (uint64_t)hash.data()[0];
     float rand = 1/min_unit_throot+r1 % 100 / 100.00;
     int64_t round_throot = power10(max_quantity.symbol.precision() - min_unit);
-
     uint64_t rand_value = (uint64_t)(max_quantity.amount * rand) / round_throot * round_throot;
     uint64_t min_value = get_precision(max_quantity) / min_unit_throot;
-    return rand_value < min_value ? min_value : rand_value;
     
-
+    return( rand_value < min_value ? min_value : rand_value );
+    
 }
 

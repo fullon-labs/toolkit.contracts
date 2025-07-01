@@ -93,9 +93,9 @@ private:
     void _token_transfer( const name& from, const name& to, const asset& quantity, const string& memo );
 
     // asset _calc_fee(const asset& fee, const uint64_t count);
-    asset _calc_red_amt(const redpack_t& redpack);
-    uint64_t rand(asset max_quantity,  uint16_t min_unit);
+    void _assign_redpack(const redpack_t& redpack, asset& assigned);
+    uint64_t _rand(asset max_quantity,  uint16_t min_unit);
 
     void _handle_deposit(const name& from, const asset& quantity, const vector<string>& parts);
-    void _handle_fee_payment(const asset& quantity, const vector<string>& parts);
+    // void _handle_fee_payment(const asset& quantity, const vector<string>& parts);
 }; //contract redpack
