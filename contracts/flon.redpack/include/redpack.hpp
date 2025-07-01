@@ -74,9 +74,6 @@ public:
     [[eosio::on_notify("mdao.token::transfer")]]
     void on_dtoken_transfer(const name& from, const name& to, const asset& quantity, const string& memo );
 
-    [[eosio::on_notify("cnyg.token::transfer")]] 
-    void on_cnygtoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo );
-
     [[eosio::on_notify("tyche.token::transfer")]] 
     void on_tychetoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo );
 
