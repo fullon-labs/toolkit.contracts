@@ -60,10 +60,8 @@ public:
         _global.set(_gstate, get_self());
     }
 
-    ACTION setfee(const extended_asset& fee);
-
-    ACTION whitelist(const name& contract, const symbol& sym, const time_point_sec& expired_time);
-    ACTION deltoken( const uint64_t& token_id );
+    ACTION listtoken(const name& contract, const symbol& sym, const time_point_sec& expired_time);
+    ACTION delisttoken( const uint64_t& token_id );
 
     [[eosio::on_notify("flon.token::transfer")]]
     void on_token_transfer(const name& from, const name& to, const asset& quantity, const string& memo);

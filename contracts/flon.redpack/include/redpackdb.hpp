@@ -40,11 +40,10 @@ struct TG_TBL_NAME("global") global_t {
     uint16_t        expire_hours;   //discarded
     uint16_t        data_failure_hours;
     bool            did_supported;
-    name           did_contract;
-    uint64_t       did_id;         //DID id, 0 means not used
-    extended_asset fee;            //fee for issuing redpack, 0 means not used
+    name            did_contract;
+    uint64_t        did_id;         //DID id, 0 means not used
 
-    EOSLIB_SERIALIZE( global_t, (admin)(expire_hours)(data_failure_hours)(did_supported)(did_contract)(did_id)(fee))
+    EOSLIB_SERIALIZE( global_t, (admin)(expire_hours)(data_failure_hours)(did_supported)(did_contract)(did_id))
 };
 typedef eosio::singleton< "global"_n, global_t > global_singleton;
 

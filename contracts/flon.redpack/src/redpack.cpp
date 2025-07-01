@@ -29,23 +29,23 @@ inline int64_t get_precision(const asset &a) {
     return get_precision(a.symbol);
 }
 
-void redpack::setfee(const extended_asset& fee) {
-    require_auth( _self );
-    CHECKC( fee.quantity.amount>0, err::FEE_NOT_POSITIVE, "fee not positive" );
+// void redpack::setfee(const extended_asset& fee) {
+//     require_auth( _self );
+//     CHECKC( fee.quantity.amount>0, err::FEE_NOT_POSITIVE, "fee not positive" );
     
-    _gstate.fee = fee;
-}
+//     _gstate.fee = fee;
+// }
 
-void redpack::deltoken( const uint64_t& token_id ) {
-    require_auth( _self );
+void redpack::delisttoken( const uint64_t& token_id ) {
+    require_auth( _gstate.admin );
 
     auto token = tokenlist_t( token_id );
     CHECKC( _db.get( token ), err::RECORD_NO_FOUND, "no such token id: " + to_string( token_id ))
     _db.del( token );
 }
 
-void redpack::whitelist(const name& contract, const symbol& sym, const time_point_sec& expired_time ) {
-    require_auth( _self );
+void redpack::listtoken(const name& contract, const symbol& sym, const time_point_sec& expired_time ) {
+    require_auth( _gstate.admin );
     // int64_t value = FLON::token::get_supply(contract, sym.code()).amount;
     // CHECKC( value > 0, err::SYMBOL_MISMATCH, "symbol mismatch" );
     
@@ -58,6 +58,7 @@ void redpack::whitelist(const name& contract, const symbol& sym, const time_poin
     
     auto token          = tokenlist_t( tid );
     _db.get( token );
+
     token.expired_time  = expired_time;
     token.sym           = sym;
     token.contract      = contract;
@@ -87,13 +88,10 @@ void redpack::_token_transfer(const name& from, const name& to, const asset& qua
 
     // memo 解析
     auto parts = split(memo, ":");
-    if (parts.size() == 4) {
-        _handle_deposit(from, quantity, parts);
-    } else if (parts.size() == 2) {
-        _handle_fee_payment(quantity, parts);
-    } else {
-        CHECKC(false, err::INVALID_FORMAT, "invalid memo format");
-    }
+    CHECKC(parts.size() == 4, err::INVALID_FORMAT, "invalid memo format, arg-size must be 4" )
+
+    _handle_deposit(from, quantity, parts);
+    
 }
 
 // -------------------------- 内部方法分离 ------------------------------
@@ -150,32 +148,32 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
     });
 }
 
-void redpack::_handle_fee_payment(const asset& quantity, const vector<string>& parts) {
-    name receiver_contract = get_first_receiver();
-    extended_asset extended_quantity(quantity, receiver_contract); 
-    CHECKC(extended_quantity >= _gstate.fee, err::QUANTITY_NOT_ENOUGH, "insufficient payment for fees");
+// void redpack::_handle_fee_payment(const asset& quantity, const vector<string>& parts) {
+//     name receiver_contract = get_first_receiver();
+//     extended_asset extended_quantity(quantity, receiver_contract); 
+//     CHECKC(extended_quantity >= _gstate.fee, err::QUANTITY_NOT_ENOUGH, "insufficient payment for fees");
 
-    symbol redpack_symbol = symbol_from_string(parts[0]);
-    name ctr = name(parts[1]);
-    asset supply = flon::token::get_supply(ctr, redpack_symbol.code());
-    CHECKC(supply.amount > 0, err::SYMBOL_MISMATCH, "symbol mismatch");
-    CHECKC(supply.symbol == redpack_symbol, err::SYMBOL_MISMATCH, "symbol mismatch");
+//     symbol redpack_symbol = symbol_from_string(parts[0]);
+//     name ctr = name(parts[1]);
+//     asset supply = flon::token::get_supply(ctr, redpack_symbol.code());
+//     CHECKC(supply.amount > 0, err::SYMBOL_MISMATCH, "symbol mismatch");
+//     CHECKC(supply.symbol == redpack_symbol, err::SYMBOL_MISMATCH, "symbol mismatch");
 
-    tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-    auto tokenlist_index = tokenlist_tbl.get_index<"by.syscon"_n>();
-    uint128_t sec_index = get_unionid(ctr, redpack_symbol.raw());
-    auto iter = tokenlist_index.find(sec_index);
-    bool found = iter != tokenlist_index.end();
-    if (found)
-        CHECKC(iter->expired_time < time_point_sec(current_time_point()), err::NOT_EXPIRED, "not expired");
+//     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
+//     auto tokenlist_index = tokenlist_tbl.get_index<"by.syscon"_n>();
+//     uint128_t sec_index = get_unionid(ctr, redpack_symbol.raw());
+//     auto iter = tokenlist_index.find(sec_index);
+//     bool found = iter != tokenlist_index.end();
+//     if (found)
+//         CHECKC(iter->expired_time < time_point_sec(current_time_point()), err::NOT_EXPIRED, "not expired");
 
-    auto tid = found ? iter->id : tokenlist_tbl.available_primary_key();
-    tokenlist_t token(tid);
-    token.expired_time = time_point_sec(current_time_point()) + seconds_per_month;
-    token.sym          = redpack_symbol;
-    token.contract     = ctr;
-    _db.set(token, _self);
-}
+//     auto tid = found ? iter->id : tokenlist_tbl.available_primary_key();
+//     tokenlist_t token(tid);
+//     token.expired_time = time_point_sec(current_time_point()) + seconds_per_month;
+//     token.sym          = redpack_symbol;
+//     token.contract     = ctr;
+//     _db.set(token, _self);
+// }
 
 void redpack::claimredpack(const name& claimer, const name& code, const string& pwhash)
 {
