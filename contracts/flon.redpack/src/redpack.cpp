@@ -29,13 +29,6 @@ inline int64_t get_precision(const asset &a) {
     return get_precision(a.symbol);
 }
 
-// void redpack::setfee(const extended_asset& fee) {
-//     require_auth( _self );
-//     CHECKC( fee.quantity.amount>0, err::FEE_NOT_POSITIVE, "fee not positive" );
-    
-//     _gstate.fee = fee;
-// }
-
 void redpack::delisttoken( const uint64_t& token_id ) {
     require_auth( _gstate.admin );
 
@@ -65,7 +58,6 @@ void redpack::listtoken(const name& contract, const symbol& sym, const time_poin
     _db.set(token, _self);
 }
 
-// issue-in op: transfer tokens to the contract and lock them according to the given plan
 void redpack::on_token_transfer( const name& from, const name& to, const asset& quantity, const string& memo)
 {
     _token_transfer( from, to, quantity, memo );
@@ -223,7 +215,7 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     // 11. 插入领取记录
     claims.emplace(_self, [&](auto& row) {
         row.id              = claims.available_primary_key();
-        row.red_pack_code   = code;
+        row.redpack_code   = code;
         row.creator         = redpack.creator;
         row.receiver        = claimer;
         row.quantity        = redpack_quantity;
@@ -263,13 +255,13 @@ void redpack::delclaims( const uint64_t& max_rows )
     size_t count = 0;
     for (; count < max_rows && claim_itr != claim_idx.end(); ) {
 
-        bool redpack_none_exist = none_exist_list.count(claim_itr->red_pack_code) > 0 ? true : false;
+        bool redpack_none_exist = none_exist_list.count(claim_itr->redpack_code) > 0 ? true : false;
         if (!redpack_none_exist){
-            redpack_t redpack(claim_itr->red_pack_code);
+            redpack_t redpack(claim_itr->redpack_code);
             redpack_none_exist = !_db.get(redpack);
             if (redpack_none_exist){
                 claim_itr = claim_idx.erase(claim_itr);
-                none_exist_list.insert(claim_itr->red_pack_code);
+                none_exist_list.insert(claim_itr->redpack_code);
                 count++;
             } else {
                 break;
