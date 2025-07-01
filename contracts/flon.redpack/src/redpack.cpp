@@ -114,12 +114,12 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
 
     int count = stoi(parts[1]);
     auto rp_type = name(stoi(parts[2]));
-    CHECKC(rp_type == RedpackType::RANDOM || rp_type == RedpackType::MEAN ||
-           rp_type == RedpackType::RANDOM_DID || rp_type == RedpackType::MEAN_DID,
+    CHECKC(rp_type == redpack_type::RANDOM || rp_type == redpack_type::MEAN ||
+           rp_type == redpack_type::RANDOM_DID || rp_type == redpack_type::MEAN_DID,
            err::TYPE_INVALID, "redpack type invalid");
 
     auto symb = quantity.symbol.code().to_string();
-    bool is_did_type = (rp_type == RedpackType::RANDOM_DID || rp_type == RedpackType::MEAN_DID);
+    bool is_did_type = (rp_type == redpack_type::RANDOM_DID || rp_type == redpack_type::MEAN_DID);
 
     if (is_did_type) {
         CHECKC(_gstate.did_supported, err::UNDER_MAINTENANCE, "did redpack not enabled");
@@ -148,33 +148,6 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
     });
 }
 
-// void redpack::_handle_fee_payment(const asset& quantity, const vector<string>& parts) {
-//     name receiver_contract = get_first_receiver();
-//     extended_asset extended_quantity(quantity, receiver_contract); 
-//     CHECKC(extended_quantity >= _gstate.fee, err::QUANTITY_NOT_ENOUGH, "insufficient payment for fees");
-
-//     symbol redpack_symbol = symbol_from_string(parts[0]);
-//     name ctr = name(parts[1]);
-//     asset supply = flon::token::get_supply(ctr, redpack_symbol.code());
-//     CHECKC(supply.amount > 0, err::SYMBOL_MISMATCH, "symbol mismatch");
-//     CHECKC(supply.symbol == redpack_symbol, err::SYMBOL_MISMATCH, "symbol mismatch");
-
-//     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-//     auto tokenlist_index = tokenlist_tbl.get_index<"by.syscon"_n>();
-//     uint128_t sec_index = get_unionid(ctr, redpack_symbol.raw());
-//     auto iter = tokenlist_index.find(sec_index);
-//     bool found = iter != tokenlist_index.end();
-//     if (found)
-//         CHECKC(iter->expired_time < time_point_sec(current_time_point()), err::NOT_EXPIRED, "not expired");
-
-//     auto tid = found ? iter->id : tokenlist_tbl.available_primary_key();
-//     tokenlist_t token(tid);
-//     token.expired_time = time_point_sec(current_time_point()) + seconds_per_month;
-//     token.sym          = redpack_symbol;
-//     token.contract     = ctr;
-//     _db.set(token, _self);
-// }
-
 void redpack::claimredpack(const name& claimer, const name& code, const string& pwhash)
 {
     require_auth(_gstate.admin);  // 1. 只有 admin 有权操作
@@ -202,7 +175,7 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
 
     // 6. 若是 DID 类型红包，需要做 DID 认证校验
     bool is_auth = false;
-    if ( redpack.type == RedpackType::RANDOM_DID || redpack.type == RedpackType::MEAN_DID) {
+    if ( redpack.type == redpack_type::RANDOM_DID || redpack.type == redpack_type::MEAN_DID) {
         auto claimer_acnts = flon::account_t::idx_t(_gstate.did_contract, claimer.value);
         for (auto claimer_acnts_iter = claimer_acnts.begin(); claimer_acnts_iter != claimer_acnts.end(); ++claimer_acnts_iter) {
             if (claimer_acnts_iter->balance.amount > 0) {
@@ -223,13 +196,13 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     // 8. 计算本次可领取红包数量（支持随机、均分模式）
     asset redpack_quantity;
     switch( redpack.type.value ) {
-        case RedpackType::RANDOM.value:
-        case RedpackType::RANDOM_DID.value:
+        case redpack_type::RANDOM.value:
+        case redpack_type::RANDOM_DID.value:
             _assign_redpack(redpack, redpack_quantity);
             break;
 
-        case RedpackType::MEAN.value:
-        case RedpackType::MEAN_DID.value:
+        case redpack_type::MEAN.value:
+        case redpack_type::MEAN_DID.value:
             redpack_quantity = (redpack.remain_count == 1) ? redpack.remain_quantity : redpack.total_quantity / redpack.receiver_count;
             break;
     }
@@ -240,16 +213,15 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     // 10. 红包主表更新剩余数量与状态
     redpack.remain_count--;
     redpack.remain_quantity -= redpack_quantity;
-    redpack.updated_at = time_point_sec(current_time_point());
+    redpack.updated_at      = time_point_sec(current_time_point());
     if (redpack.remain_count == 0) {
         redpack.status = redpack_status::FINISHED;
     }
     _db.set(redpack, _self);
 
     // 11. 插入领取记录
-    auto id = claims.available_primary_key();
     claims.emplace(_self, [&](auto& row) {
-        row.id              = id;
+        row.id              = claims.available_primary_key();
         row.red_pack_code   = code;
         row.creator         = redpack.creator;
         row.receiver        = claimer;
@@ -282,7 +254,7 @@ void redpack::cancel( const name& code )
 
 void redpack::delclaims( const uint64_t& max_rows )
 {
-    set<name> is_not_exist;
+    set<name> none_exist_list;
 
     claim_t::idx_t claim_idx(_self, _self.value);
     auto claim_itr = claim_idx.begin();
@@ -290,13 +262,13 @@ void redpack::delclaims( const uint64_t& max_rows )
     size_t count = 0;
     for (; count < max_rows && claim_itr != claim_idx.end(); ) {
 
-        bool redpack_not_existed = is_not_exist.count(claim_itr->red_pack_code) > 0 ? true : false;
-        if (!redpack_not_existed){
+        bool redpack_none_exist = none_exist_list.count(claim_itr->red_pack_code) > 0 ? true : false;
+        if (!redpack_none_exist){
             redpack_t redpack(claim_itr->red_pack_code);
-            redpack_not_existed = !_db.get(redpack);
-            if (redpack_not_existed){
+            redpack_none_exist = !_db.get(redpack);
+            if (redpack_none_exist){
                 claim_itr = claim_idx.erase(claim_itr);
-                is_not_exist.insert(claim_itr->red_pack_code);
+                none_exist_list.insert(claim_itr->red_pack_code);
                 count++;
             } else {
                 break;

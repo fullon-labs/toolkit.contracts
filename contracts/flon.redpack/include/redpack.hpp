@@ -32,7 +32,7 @@ enum class err: uint8_t {
    DID_PACK_SYMBOL_ERR  = 31
 };
 
-namespace RedpackType {
+namespace redpack_type {
    static constexpr eosio::name RANDOM                 { "random"_n          };
    static constexpr eosio::name RANDOM_DID             { "random.did"_n      };
 

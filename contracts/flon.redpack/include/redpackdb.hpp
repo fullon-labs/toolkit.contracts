@@ -78,8 +78,8 @@ struct TG_TBL redpack_t {
         // indexed_by<"senderid"_n,  const_mem_fun<redpack_t, uint64_t, &redpack_t::by_sender> >
     > idx_t;
 
-    EOSLIB_SERIALIZE( redpack_t, (code)(type)(creator)(pw_hash)(total_quantity)(receiver_count)(remain_quantity)
-                                 (remain_count)(status)(created_at)(updated_at) )
+    EOSLIB_SERIALIZE( redpack_t, (code)(type)(creator)(pw_hash)(total_quantity)(receiver_count)(remain_quantity)(remain_count)
+                                 (status)(created_at)(updated_at) )
 };
 
 struct TG_TBL claim_t {
