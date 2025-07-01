@@ -73,10 +73,10 @@ struct TG_TBL redpack_t {
     redpack_t(){}
     redpack_t( const name& c ): code(c){}
 
-    // typedef eosio::multi_index<"redpacks"_n, redpack_t
-    //     // indexed_by<"updatedid"_n,  const_mem_fun<redpack_t, uint64_t, &redpack_t::by_updatedid> >,
-    //     // indexed_by<"senderid"_n,  const_mem_fun<redpack_t, uint64_t, &redpack_t::by_sender> >
-    // > idx_t;
+    typedef eosio::multi_index<"redpacks"_n, redpack_t
+        // indexed_by<"updatedid"_n,  const_mem_fun<redpack_t, uint64_t, &redpack_t::by_updatedid> >,
+        // indexed_by<"senderid"_n,  const_mem_fun<redpack_t, uint64_t, &redpack_t::by_sender> >
+    > idx_t;
 
     EOSLIB_SERIALIZE( redpack_t, (code)(type)(creator)(pw_hash)(total_quantity)(receiver_count)(remain_quantity)(remain_count)
                                  (status)(created_at)(updated_at) )
