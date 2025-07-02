@@ -43,7 +43,7 @@ void redpack::listtoken(const name& contract, const symbol& sym, const time_poin
     // CHECKC( value > 0, err::SYMBOL_MISMATCH, "symbol mismatch" );
     
     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-    auto tokenlist_index = tokenlist_tbl.get_index<"by.syscon"_n>();
+    auto tokenlist_index = tokenlist_tbl.get_index<"by.consym"_n>();
     uint128_t sec_index = get_unionid(contract, sym.raw());
     auto tokenlist_iter = tokenlist_index.find(sec_index);
     auto found          = tokenlist_iter != tokenlist_index.end();
@@ -52,9 +52,10 @@ void redpack::listtoken(const name& contract, const symbol& sym, const time_poin
     auto token          = tokenlist_t( tid );
     _db.get( token );
 
-    token.expired_time  = expired_time;
-    token.sym           = sym;
-    token.contract      = contract;
+    token.token_contract    = contract;
+    token.token_symbol      = sym;
+    token.expired_at        = expired_time;
+    
     _db.set(token, _self);
 }
 
@@ -78,7 +79,7 @@ void redpack::_token_transfer(const name& from, const name& to, const asset& qua
     if (from == _self || to != _self) return;
     CHECKC(quantity.amount > 0, err::NOT_POSITIVE, "quantity must be positive")
 
-    // memo 解析
+    // memo format: [ $password:$count:$type:$code ]
     auto parts = split(memo, ":");
     CHECKC(parts.size() == 4, err::INVALID_FORMAT, "invalid memo format, arg-size must be 4" )
 
@@ -93,11 +94,11 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
 
     // 校验 token 是否可用且未过期
     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-    auto tokenlist_index = tokenlist_tbl.get_index<"by.syscon"_n>();
+    auto tokenlist_index = tokenlist_tbl.get_index<"by.consym"_n>();
     uint128_t sec_index = get_unionid(receiver_contract, quantity.symbol.raw());
     auto iter = tokenlist_index.find(sec_index);
     CHECKC(iter != tokenlist_index.end(), err::NON_RENEWAL, "non-renewal");
-    CHECKC(iter->expired_time > time_point_sec(current_time_point()), err::NON_RENEWAL, "non-renewal");
+    CHECKC(iter->expired_at > time_point_sec(current_time_point()), err::NON_RENEWAL, "non-renewal");
 
 
     // 业务参数 [ $count:$type:$code ]
@@ -157,7 +158,7 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
         auto tokenlist_index = tokenlist_tbl.get_index<"by.sym"_n>();
         auto tokenlist_iter = tokenlist_index.find(redpack.total_quantity.symbol.raw());
         CHECKC(tokenlist_iter != tokenlist_index.end(), err::RECORD_NO_FOUND, "token list not found");
-        contract_name = tokenlist_iter->contract;
+        contract_name = tokenlist_iter->token_contract;
     }
 
     // 4. 校验密码是否一致
@@ -236,7 +237,7 @@ void redpack::cancel( const name& code )
             auto tokenlist_index = tokenlist_tbl.get_index<"by.sym"_n>();
             auto tokenlist_iter = tokenlist_index.find(redpack.total_quantity.symbol.raw());
             CHECKC( tokenlist_iter != tokenlist_index.end(), err::RECORD_NO_FOUND, "token list not found" );
-            TRANSFER_OUT(tokenlist_iter->contract, redpack.creator, redpack.remain_quantity, string("red pack cancel transfer"));
+            TRANSFER_OUT(tokenlist_iter->token_contract, redpack.creator, redpack.remain_quantity, string("red pack cancel transfer"));
         } else {
             auto contract_name = name(pw_hash[1]);
             TRANSFER_OUT(contract_name, redpack.creator, redpack.remain_quantity, string("red pack cancel transfer"));
