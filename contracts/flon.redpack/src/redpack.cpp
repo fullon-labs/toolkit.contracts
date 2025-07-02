@@ -43,7 +43,7 @@ void redpack::listtoken(const name& contract, const symbol& sym, const time_poin
     // CHECKC( value > 0, err::SYMBOL_MISMATCH, "symbol mismatch" );
     
     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-    auto tokenlist_index = tokenlist_tbl.get_index<"by.consym"_n>();
+    auto tokenlist_index = tokenlist_tbl.get_index<"by.consymb"_n>();
     uint128_t sec_index = get_unionid(contract, sym.raw());
     auto tokenlist_iter = tokenlist_index.find(sec_index);
     auto found          = tokenlist_iter != tokenlist_index.end();
@@ -78,8 +78,9 @@ void redpack::_token_transfer(const name& from, const name& to, const asset& qua
 {
     if (from == _self || to != _self) return;
     CHECKC(quantity.amount > 0, err::NOT_POSITIVE, "quantity must be positive")
+    CHECKC( is_account(from), err::ACCOUNT_INVALID, "account invalid" );
 
-    // memo format: [ $password:$count:$type:$code ]
+    // memo format: [ $code:$type:$count:$password_$contract ]
     auto parts = split(memo, ":");
     CHECKC(parts.size() == 4, err::INVALID_FORMAT, "invalid memo format, arg-size must be 4" )
 
@@ -88,37 +89,39 @@ void redpack::_token_transfer(const name& from, const name& to, const asset& qua
 }
 
 // -------------------------- 内部方法分离 ------------------------------
-
+// 业务参数parts [ $code:$type:$did_required:$count:$pw_hash ]
 void redpack::_handle_deposit(const name& from, const asset& quantity, const vector<string>& parts) {
-    name receiver_contract = get_first_receiver();
+    auto token_contract = get_first_receiver();
 
     // 校验 token 是否可用且未过期
     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-    auto tokenlist_index = tokenlist_tbl.get_index<"by.consym"_n>();
-    uint128_t sec_index = get_unionid(receiver_contract, quantity.symbol.raw());
-    auto iter = tokenlist_index.find(sec_index);
-    CHECKC(iter != tokenlist_index.end(), err::NON_RENEWAL, "non-renewal");
-    CHECKC(iter->expired_at > time_point_sec(current_time_point()), err::NON_RENEWAL, "non-renewal");
-
-
-    // 业务参数 [ $count:$type:$code ]
-    name code = name(parts[3]);
+    auto tokenlist_index = tokenlist_tbl.get_index<"by.consymb"_n>();
+    uint128_t consymb_id = get_unionid( token_contract, quantity.symbol.raw() );
+    auto iter = tokenlist_index.find( consymb_id );
+    CHECKC( iter != tokenlist_index.end(), err::RECORD_NO_FOUND, "redpack token not listed");
+    CHECKC( iter->expired_at > current_time_point(), err::EXPIRED, "redpack token term expired");
+    
+    name code = name(parts[0]);
     redpack_t redpack(code);
-    CHECKC(!_db.get(redpack), err::REDPACK_EXIST, "code already exists");
-
-    int count = stoi(parts[1]);
-    auto rp_type = name(stoi(parts[2]));
+    CHECKC( !_db.get(redpack), err::REDPACK_EXIST, "code already exists" );
+    
+    auto rp_type = name(stoi(parts[1]));
     CHECKC( (rp_type == redpack_type::RANDOM || rp_type == redpack_type::MEAN), err::TYPE_INVALID, "redpack type invalid");
+
+    bool did_required = ( stoi(parts[2]) > 0 );  // 是否需要 DID 认证: 0: no, 1: yes
+
+    int count = stoi(parts[3]);
+    CHECKC( count > 0, err::NOT_POSITIVE, "receiver count must be positive" );
 
     auto symb = quantity.symbol.code().to_string();
 
     if( redpack.did_required ) {
-        CHECKC(_gstate.did_supported, err::UNDER_MAINTENANCE, "did redpack not supported");
+        CHECKC(_gstate.did_supported, err::UNDER_MAINTENANCE, "did redpack not supported for " + token_contract.to_string());
         CHECKC(symb == "FLON" || symb == "USDT" || symb == "USDC" || symb == "TYCHE",
                err::DID_PACK_SYMBOL_ERR, "DID redpack tokens can only be FLON|MUSDT|MUSDC|TYCHE");
+
     } else {
-        CHECKC(quantity.amount / count >= 100, err::QUANTITY_NOT_ENOUGH,
-               "Minimal unit 100 " + symb + " required");
+        CHECKC(quantity.amount / count >= 100, err::INSUFFICIENT_QUANTITY, "Minimal unit 100 " + symb + " required");
     }
 
     // 保存红包信息
@@ -128,7 +131,7 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
         row.code            = code;
         row.type            = rp_type;
         row.creator         = from;
-        row.pw_hash         = parts[0] + ":" + get_first_receiver().to_string();
+        row.pw_hash         = parts[4] + ":" + token_contract.to_string();
         row.total_quantity  = quantity;
         row.receiver_count  = count;
         row.remain_quantity = quantity;
@@ -153,7 +156,7 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     auto contract_name = name(pw_hash[1]);
     if (contract_name.length() == 0) {
         tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-        auto tokenlist_index = tokenlist_tbl.get_index<"by.sym"_n>();
+        auto tokenlist_index = tokenlist_tbl.get_index<"by.symb"_n>();
         auto tokenlist_iter = tokenlist_index.find(redpack.total_quantity.symbol.raw());
         CHECKC(tokenlist_iter != tokenlist_index.end(), err::RECORD_NO_FOUND, "token list not found");
         contract_name = tokenlist_iter->token_contract;
@@ -230,7 +233,7 @@ void redpack::cancel( const name& code )
         auto contract = pw_hash[1];
         if (contract.size() == 0) {
             tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-            auto tokenlist_index = tokenlist_tbl.get_index<"by.sym"_n>();
+            auto tokenlist_index = tokenlist_tbl.get_index<"by.symb"_n>();
             auto tokenlist_iter = tokenlist_index.find(redpack.total_quantity.symbol.raw());
             CHECKC( tokenlist_iter != tokenlist_index.end(), err::RECORD_NO_FOUND, "token list not found" );
             TRANSFER_OUT(tokenlist_iter->token_contract, redpack.creator, redpack.remain_quantity, string("red pack cancel transfer"));

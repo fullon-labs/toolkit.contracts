@@ -114,8 +114,8 @@ struct TG_TBL tokenlist_t {
     uint64_t  by_symbol() const { return token_symbol.raw(); }
 
     typedef eosio::multi_index<"tokenlist"_n, tokenlist_t,
-        indexed_by<"by.consym"_n,  const_mem_fun<tokenlist_t, uint128_t, &tokenlist_t::by_contract_symbol> >,
-        indexed_by<"by.sym"_n,  const_mem_fun<tokenlist_t, uint64_t, &tokenlist_t::by_symbol> >
+        indexed_by<"by.consymb"_n,  const_mem_fun<tokenlist_t, uint128_t, &tokenlist_t::by_contract_symbol> >,
+        indexed_by<"by.symb"_n,  const_mem_fun<tokenlist_t, uint64_t, &tokenlist_t::by_symbol> >
     > idx_t;
 
     EOSLIB_SERIALIZE( tokenlist_t, (id)(token_contract)(token_symbol)(expired_at) )
