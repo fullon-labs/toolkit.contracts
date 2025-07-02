@@ -108,13 +108,11 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
 
     int count = stoi(parts[1]);
     auto rp_type = name(stoi(parts[2]));
-    CHECKC(rp_type == redpack_type::RANDOM || rp_type == redpack_type::MEAN || rp_type == redpack_type::RANDOM_DID || rp_type == redpack_type::MEAN_DID,
-           err::TYPE_INVALID, "redpack type invalid");
+    CHECKC( (rp_type == redpack_type::RANDOM || rp_type == redpack_type::MEAN), err::TYPE_INVALID, "redpack type invalid");
 
     auto symb = quantity.symbol.code().to_string();
-    bool is_did_type = (rp_type == redpack_type::RANDOM_DID || rp_type == redpack_type::MEAN_DID);
 
-    if (is_did_type) {
+    if( redpack.did_required ) {
         CHECKC(_gstate.did_supported, err::UNDER_MAINTENANCE, "did redpack not supported");
         CHECKC(symb == "FLON" || symb == "USDT" || symb == "USDC" || symb == "TYCHE",
                err::DID_PACK_SYMBOL_ERR, "DID redpack tokens can only be FLON|MUSDT|MUSDC|TYCHE");
@@ -169,7 +167,7 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
 
     // 6. 若是 DID 类型红包，需要做 DID 认证校验
     bool is_auth = false;
-    if ( redpack.type == redpack_type::RANDOM_DID || redpack.type == redpack_type::MEAN_DID) {
+    if ( redpack.did_required ) {
         auto claimer_acnts = flon::account_t::idx_t(_gstate.did_contract, claimer.value);
         for (auto claimer_acnts_iter = claimer_acnts.begin(); claimer_acnts_iter != claimer_acnts.end(); ++claimer_acnts_iter) {
             if (claimer_acnts_iter->balance.amount > 0) {
@@ -191,12 +189,10 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     asset redpack_quantity;
     switch( redpack.type.value ) {
         case redpack_type::RANDOM.value:
-        case redpack_type::RANDOM_DID.value:
             _assign_redpack(redpack, redpack_quantity);
             break;
 
         case redpack_type::MEAN.value:
-        case redpack_type::MEAN_DID.value:
             redpack_quantity = (redpack.remain_count == 1) ? redpack.remain_quantity : redpack.total_quantity / redpack.receiver_count;
             break;
     }

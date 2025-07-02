@@ -54,8 +54,11 @@ inline uint128_t get_unionid( const name& rec, uint64_t packid ) {
 
 struct TG_TBL redpack_t {
     name            code;   //PK
-    name            type;   //RANDOM | MEAN | RANDOM_DID | MEAN_DID
+    name            type;   //RANDOM | MEAN
     name            creator;
+    bool            did_required = false; //是否需要DID验证
+    // if did_required is true, then pw_hash is the DID id, otherwise it is the password hash
+    // pw_hash is a string in format: "password:contract_name"
     string          pw_hash;
     asset           total_quantity;
     uint64_t        receiver_count;
@@ -72,7 +75,7 @@ struct TG_TBL redpack_t {
 
     typedef eosio::multi_index<"redpacks"_n, redpack_t> idx_t;
 
-    EOSLIB_SERIALIZE( redpack_t, (code)(type)(creator)(pw_hash)(total_quantity)(receiver_count)(remain_quantity)(remain_count)
+    EOSLIB_SERIALIZE( redpack_t, (code)(type)(creator)(did_required)(pw_hash)(total_quantity)(receiver_count)(remain_quantity)(remain_count)
                                  (status)(created_at)(updated_at) )
 };
 
