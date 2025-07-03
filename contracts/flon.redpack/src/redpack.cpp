@@ -146,7 +146,7 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
     redpacks.emplace(_self, [&](auto& row) {
         row.code            = code;
         row.type            = rp_type;
-        row.wrapper         = from;
+        row.creator         = from;
         row.passwd_hash     = passwd_hash;
         row.token_contract  = token_contract;
         row.total_quant     = quantity;
@@ -263,7 +263,7 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     claims.emplace(_self, [&](auto& row) {
         row.id              = claims.available_primary_key();
         row.redpack_code    = code;
-        row.redpack_wrapper = redpack.wrapper;
+        row.redpack_creator = redpack.creator;
         row.claimer         = claimer;
         row.quantity        = assigned_quant;
         row.claimed_at      = current_time_point();
@@ -281,17 +281,12 @@ void redpack::cancel(const name& code)
     CHECKC(current_time_point() > redpack.created_at + eosio::hours(_gstate.redpack_expiry_hours),
            err::NOT_EXPIRED, "expiration is not reached");
 
-    // 状态判断：只允许 CREATED、SERVICING 和 FINISHED
-    CHECKC(redpack.status == redpack_status::CREATED || 
-            redpack.status == redpack_status::SERVICING ||
-            redpack.status == redpack_status::FINISHED,
-           err::STATUS_MISMATCH, "redpack is not cancelable");
-
     // 如果是 SERVICING，退还剩余金额
-    if (redpack.status == redpack_status::SERVICING && redpack.remaining_quant.amount > 0) {
+    if ((redpack.status == redpack_status::CREATED ||
+        redpack.status == redpack_status::SERVICING ) && redpack.remaining_quant.amount > 0) {
         TRANSFER_OUT(
             redpack.token_contract,
-            redpack.wrapper,
+            redpack.creator,
             redpack.remaining_quant,
             string("redpack remaining returned"));
     }

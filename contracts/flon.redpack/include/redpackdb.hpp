@@ -55,7 +55,7 @@ inline uint128_t get_unionid( const name& rec, uint64_t packid ) {
 struct TG_TBL redpack_t {
     name            code;   //PK
     name            type;   //RANDOM | MEAN
-    name            wrapper; //redpack creator, the one who deposit the token
+    name            creator; //redpack creator, the one who deposit the token
     bool            did_required = false; //是否需要DID验证
     bool            unwrapped_by_admin = true; //如果是管理员帮助领取，则管理员支付Gas费, 否则用户拆红包并支付Gas费
 
@@ -77,7 +77,7 @@ struct TG_TBL redpack_t {
 
     typedef eosio::multi_index<"redpacks"_n, redpack_t> idx_t;
 
-    EOSLIB_SERIALIZE( redpack_t, (code)(type)(wrapper)(did_required)(unwrapped_by_admin)
+    EOSLIB_SERIALIZE( redpack_t, (code)(type)(creator)(did_required)(unwrapped_by_admin)
                                  (passwd_hash)(total_quant)(total_count)(remaining_quant)(remaining_count)
                                  (status)(created_at)(updated_at) )
 };
@@ -85,7 +85,7 @@ struct TG_TBL redpack_t {
 struct TG_TBL claim_t {
     uint64_t        id;                         //PK
     name            redpack_code;
-    name            redpack_wrapper;            //redpack creator
+    name            redpack_creator;            //redpack creator
     name            claimer;                    // who receives the redpack
     asset           quantity;                   //amount to receive
     time_point      claimed_at;                 //claim time: when the redpack is claimed
@@ -100,7 +100,7 @@ struct TG_TBL claim_t {
         indexed_by<"by.unionid"_n,  const_mem_fun<claim_t, uint128_t, &claim_t::by_unionid> >
     > idx_t;
 
-    EOSLIB_SERIALIZE( claim_t, (id)(redpack_code)(redpack_wrapper)(claimer)(quantity)(claimed_at) )
+    EOSLIB_SERIALIZE( claim_t, (id)(redpack_code)(redpack_creator)(claimer)(quantity)(claimed_at) )
 };
 
 struct TG_TBL tokenlist_t {
