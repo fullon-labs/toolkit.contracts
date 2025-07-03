@@ -145,7 +145,7 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
     auto now = current_time_point();
     redpacks.emplace(_self, [&](auto& row) {
         row.code            = code;
-        row.type            = rp_type;
+        row.assign_type     = rp_type;
         row.creator         = from;
         row.passwd_hash     = passwd_hash;
         row.token_contract  = token_contract;
@@ -233,9 +233,9 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
 
     // 7. 计算应领取数量
     asset assigned_quant;
-    if (redpack.type == redpack_type::RANDOM) {
+    if (redpack.assign_type == redpack_type::RANDOM) {
         _assign_redpack(redpack, assigned_quant);
-    } else if (redpack.type == redpack_type::MEAN) {
+    } else if (redpack.assign_type == redpack_type::MEAN) {
         assigned_quant = (redpack.remaining_count == 1)
                          ? redpack.remaining_quant
                          : redpack.total_quant / redpack.total_count;

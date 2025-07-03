@@ -54,7 +54,7 @@ inline uint128_t get_unionid( const name& rec, uint64_t packid ) {
 
 struct TG_TBL redpack_t {
     name            code;   //PK
-    name            type;   //RANDOM | MEAN
+    name            assign_type;   //RANDOM | MEAN
     name            creator; //redpack creator, the one who deposit the token
     bool            did_required = false; //是否需要DID验证
     bool            unwrapped_by_admin = true; //如果是管理员帮助领取，则管理员支付Gas费, 否则用户拆红包并支付Gas费
@@ -66,6 +66,7 @@ struct TG_TBL redpack_t {
     uint64_t        total_count;
     asset           remaining_quant;
     uint64_t        remaining_count      = 0;
+    asset           fee                  = asset(0, SYS_SYMBOL); //unit_fee * total_count
     name            status;
     time_point      created_at;
     time_point      updated_at;
@@ -77,7 +78,7 @@ struct TG_TBL redpack_t {
 
     typedef eosio::multi_index<"redpacks"_n, redpack_t> idx_t;
 
-    EOSLIB_SERIALIZE( redpack_t, (code)(type)(creator)(did_required)(unwrapped_by_admin)
+    EOSLIB_SERIALIZE( redpack_t, (code)(assign_type)(creator)(did_required)(unwrapped_by_admin)
                                  (passwd_hash)(total_quant)(total_count)(remaining_quant)(remaining_count)
                                  (status)(created_at)(updated_at) )
 };
