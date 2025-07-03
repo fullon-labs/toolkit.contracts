@@ -34,6 +34,7 @@ icon: @ICON_BASE_URL@/@TOKEN_ICON_URI@
 
 Add a new token into the redpack supported token list
 
+<h1 class="contract"> claimredpack </h1>
 
 <h1 class="contract"> propose </h1>
 
