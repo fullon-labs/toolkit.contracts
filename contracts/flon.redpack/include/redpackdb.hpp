@@ -27,7 +27,7 @@ static constexpr uint64_t DAY_SECONDS           = 24 * 60 * 60;
 static constexpr uint64_t DAY_SECONDS           = DAY_SECONDS_FOR_TEST;
 #endif//DAY_SECONDS_FOR_TEST
 
-static constexpr uint32_t MAX_TITLE_SIZE        = 64;
+static constexpr uint32_t   MAX_TITLE_SIZE        = 64;
 static constexpr uint8_t    EXPIRY_HOURS        = 12;
 
 namespace wasm { namespace db {
@@ -37,13 +37,12 @@ namespace wasm { namespace db {
 
 struct TG_TBL_NAME("global") global_t {
     name            admin;
-    uint16_t        expire_hours;   //discarded
-    uint16_t        data_failure_hours;
-    bool            did_supported;
     name            did_contract;
-    uint64_t        did_id;         //DID id, 0 means not used
+    uint16_t        redpack_expiry_hours; //红包过期时间，单位小时
+    asset           unwrap_unit_fee = asset(1000, SYS_SYMBOL); //unit fee for admin unwrap, 0.001 FLON
+    bool            unrwap_fee_required = false; //是否对红包创建人征收手续费
 
-    EOSLIB_SERIALIZE( global_t, (admin)(expire_hours)(data_failure_hours)(did_supported)(did_contract)(did_id))
+    EOSLIB_SERIALIZE( global_t, (admin)(did_contract)(redpack_expiry_hours)(unwrap_unit_fee)(unrwap_fee_required) )
 };
 typedef eosio::singleton< "global"_n, global_t > global_singleton;
 
@@ -55,15 +54,17 @@ inline uint128_t get_unionid( const name& rec, uint64_t packid ) {
 struct TG_TBL redpack_t {
     name            code;   //PK
     name            type;   //RANDOM | MEAN
-    name            creator;
+    name            wrapper; //redpack creator, the one who deposit the token
     bool            did_required = false; //是否需要DID验证
-    // if did_required is true, then pw_hash is the DID id, otherwise it is the password hash
-    // pw_hash is a string in format: "password:contract_name"
-    string          pw_hash;
-    asset           total_quantity;
-    uint64_t        receiver_count;
-    asset           remain_quantity;
-    uint64_t        remain_count      = 0;
+    bool            unwrapped_by_admin = true; //如果是管理员帮助领取，则管理员支付Gas费, 否则用户拆红包并支付Gas费
+
+    // if did_required is true, then passwd_hash is the DID id, otherwise it is the password hash
+    string          passwd_hash;    //redpack password hash
+    name            token_contract;
+    asset           total_quant;
+    uint64_t        total_count;
+    asset           remaining_quant;
+    uint64_t        remaining_count      = 0;
     name            status;
     time_point      created_at;
     time_point      updated_at;
@@ -75,15 +76,16 @@ struct TG_TBL redpack_t {
 
     typedef eosio::multi_index<"redpacks"_n, redpack_t> idx_t;
 
-    EOSLIB_SERIALIZE( redpack_t, (code)(type)(creator)(did_required)(pw_hash)(total_quantity)(receiver_count)(remain_quantity)(remain_count)
+    EOSLIB_SERIALIZE( redpack_t, (code)(type)(wrapper)(did_required)(unwrapped_by_admin)
+                                 (passwd_hash)(total_quant)(total_count)(remaining_quant)(remaining_count)
                                  (status)(created_at)(updated_at) )
 };
 
 struct TG_TBL claim_t {
     uint64_t        id;                         //PK
     name            redpack_code;
-    name            creator;                    //redpack creator
-    name            receiver;                   //claimer
+    name            redpack_wrapper;            //redpack creator
+    name            claimer;                    // who receives the redpack
     asset           quantity;                   //amount to receive
     time_point      claimed_at;                 //claim time: when the redpack is claimed
     
@@ -91,20 +93,19 @@ struct TG_TBL claim_t {
     claim_t( const uint64_t& i ): id(i) {}
 
     uint64_t primary_key() const { return id; }
-    uint128_t by_unionid() const { return get_unionid(receiver, redpack_code.value); }
+    uint128_t by_unionid() const { return get_unionid(claimer, redpack_code.value); }
 
     typedef eosio::multi_index<"claims"_n, claim_t,
         indexed_by<"by.unionid"_n,  const_mem_fun<claim_t, uint128_t, &claim_t::by_unionid> >
     > idx_t;
 
-    EOSLIB_SERIALIZE( claim_t, (id)(redpack_code)(creator)(receiver)(quantity)(claimed_at) )
+    EOSLIB_SERIALIZE( claim_t, (id)(redpack_code)(redpack_wrapper)(claimer)(quantity)(claimed_at) )
 };
 
 struct TG_TBL tokenlist_t {
     uint64_t        id;
     name            token_contract;   
     symbol          token_symbol;
-    time_point_sec  expired_at;
 
     tokenlist_t(){}
     tokenlist_t( const uint64_t& i ): id(i){}
@@ -118,7 +119,7 @@ struct TG_TBL tokenlist_t {
         indexed_by<"by.symb"_n,  const_mem_fun<tokenlist_t, uint64_t, &tokenlist_t::by_symbol> >
     > idx_t;
 
-    EOSLIB_SERIALIZE( tokenlist_t, (id)(token_contract)(token_symbol)(expired_at) )
+    EOSLIB_SERIALIZE( tokenlist_t, (id)(token_contract)(token_symbol) )
 };
 
 } }

@@ -29,6 +29,8 @@ enum class err: uint8_t {
    NONE_DELETED         = 19,
    IN_THE_WHITELIST     = 20,
    NON_RENEWAL          = 21,
+   AMOUNT_TOO_SMALL     = 22,
+   AMOUNT_TOO_LARGE     = 23,
    DID_PACK_SYMBOL_ERR  = 31
 };
 
@@ -88,9 +90,7 @@ public:
         CHECKC( hours > 0, err::VAILD_TIME_INVALID, "valid time must be positive" );
 
         _gstate.admin               = admin;
-        _gstate.expire_hours        = hours;
-        _gstate.did_supported       = did_supported;
-        _gstate.did_id              = did_id;
+        _gstate.redpack_expiry_hours = hours;
         _gstate.did_contract        = did_contract;
     }
 

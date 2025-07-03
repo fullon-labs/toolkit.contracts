@@ -39,8 +39,6 @@ void redpack::delisttoken( const uint64_t& token_id ) {
 
 void redpack::listtoken(const name& contract, const symbol& sym, const time_point_sec& expired_time ) {
     require_auth( _gstate.admin );
-    // int64_t value = FLON::token::get_supply(contract, sym.code()).amount;
-    // CHECKC( value > 0, err::SYMBOL_MISMATCH, "symbol mismatch" );
     
     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
     auto tokenlist_index = tokenlist_tbl.get_index<"by.consymb"_n>();
@@ -54,7 +52,6 @@ void redpack::listtoken(const name& contract, const symbol& sym, const time_poin
 
     token.token_contract    = contract;
     token.token_symbol      = sym;
-    token.expired_at        = expired_time;
     
     _db.set(token, _self);
 }
@@ -80,7 +77,7 @@ void redpack::_token_transfer(const name& from, const name& to, const asset& qua
     CHECKC(quantity.amount > 0, err::NOT_POSITIVE, "quantity must be positive")
     CHECKC( is_account(from), err::ACCOUNT_INVALID, "account invalid" );
 
-    // memo format: [ $code:$type:$count:$password_$contract ]
+    // memo format: [ $code:$type:$count:$password_hash:$contract ]
     auto parts = split(memo, ":");
     CHECKC(parts.size() == 4, err::INVALID_FORMAT, "invalid memo format, arg-size must be 4" )
 
@@ -89,53 +86,58 @@ void redpack::_token_transfer(const name& from, const name& to, const asset& qua
 }
 
 // -------------------------- 内部方法分离 ------------------------------
-// 业务参数parts [ $code:$type:$did_required:$count:$pw_hash ]
+// memo format: [ $code:$type:$did_required:$count:$password_hash:$contract ]
 void redpack::_handle_deposit(const name& from, const asset& quantity, const vector<string>& parts) {
     auto token_contract = get_first_receiver();
 
-    // 校验 token 是否可用且未过期
+    // 校验token是否在 tokenlist 中
     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
     auto tokenlist_index = tokenlist_tbl.get_index<"by.consymb"_n>();
     uint128_t consymb_id = get_unionid( token_contract, quantity.symbol.raw() );
     auto iter = tokenlist_index.find( consymb_id );
     CHECKC( iter != tokenlist_index.end(), err::RECORD_NO_FOUND, "redpack token not listed");
-    CHECKC( iter->expired_at > current_time_point(), err::EXPIRED, "redpack token term expired");
     
+    // -- memo parts[0]: code
     name code = name(parts[0]);
     redpack_t redpack(code);
     CHECKC( !_db.get(redpack), err::REDPACK_EXIST, "code already exists" );
     
+    // -- memo parts[1]: type
     auto rp_type = name(stoi(parts[1]));
     CHECKC( (rp_type == redpack_type::RANDOM || rp_type == redpack_type::MEAN), err::TYPE_INVALID, "redpack type invalid");
 
-    bool did_required = ( stoi(parts[2]) > 0 );  // 是否需要 DID 认证: 0: no, 1: yes
+    // -- memo parts[2]: did_required
+    bool did_required = ( stoi(parts[2]) == 1 );  // 是否需要 DID 认证: 0: no, 1: yes
 
+    // -- memo parts[3]: count
     int count = stoi(parts[3]);
-    CHECKC( count > 0, err::NOT_POSITIVE, "receiver count must be positive" );
+    CHECKC( count > 0, err::NOT_POSITIVE, "redpack count must be positive" );
+    CHECKC( count <= 10000, err::AMOUNT_TOO_LARGE, "redpack count must be no greater than 10000" );
+    
+    // -- memo parts[4]: password_hash
+    string passwd_hash = parts[4];
 
     auto symb = quantity.symbol.code().to_string();
+    CHECKC( quantity.amount / count >= 100, err::INSUFFICIENT_QUANTITY, "Minimal unit 100 " + symb + " required")
 
     if( redpack.did_required ) {
-        CHECKC(_gstate.did_supported, err::UNDER_MAINTENANCE, "did redpack not supported for " + token_contract.to_string());
         CHECKC(symb == "FLON" || symb == "USDT" || symb == "USDC" || symb == "TYCHE",
                err::DID_PACK_SYMBOL_ERR, "DID redpack tokens can only be FLON|MUSDT|MUSDC|TYCHE");
-
-    } else {
-        CHECKC(quantity.amount / count >= 100, err::INSUFFICIENT_QUANTITY, "Minimal unit 100 " + symb + " required");
     }
-
+    
     // 保存红包信息
     redpack_t::idx_t redpacks(_self, _self.value);
     auto now = current_time_point();
     redpacks.emplace(_self, [&](auto& row) {
         row.code            = code;
         row.type            = rp_type;
-        row.creator         = from;
-        row.pw_hash         = parts[4] + ":" + token_contract.to_string();
-        row.total_quantity  = quantity;
-        row.receiver_count  = count;
-        row.remain_quantity = quantity;
-        row.remain_count    = count;
+        row.wrapper         = from;
+        row.passwd_hash     = passwd_hash;
+        row.token_contract  = token_contract;
+        row.total_quant     = quantity;
+        row.total_count     = count;
+        row.remaining_quant = quantity;
+        row.remaining_count = count;
         row.status          = redpack_status::CREATED;
         row.created_at      = now;
         row.updated_at      = now;
@@ -149,29 +151,18 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
 
     // 2. 读取红包主表，查不到直接抛错
     redpack_t redpack(code);
-    CHECKC(_db.get(redpack), err::RECORD_NO_FOUND, "redpack not found");
-
-    // 3. 拆分 pw_hash，提取 token 合约账户名（如无则从 tokenlist 补齐）
-    auto pw_hash = split(redpack.pw_hash, ":");
-    auto contract_name = name(pw_hash[1]);
-    if (contract_name.length() == 0) {
-        tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-        auto tokenlist_index = tokenlist_tbl.get_index<"by.symb"_n>();
-        auto tokenlist_iter = tokenlist_index.find(redpack.total_quantity.symbol.raw());
-        CHECKC(tokenlist_iter != tokenlist_index.end(), err::RECORD_NO_FOUND, "token list not found");
-        contract_name = tokenlist_iter->token_contract;
-    }
+    CHECKC( _db.get(redpack), err::RECORD_NO_FOUND, "redpack not found" )
 
     // 4. 校验密码是否一致
-    CHECKC(pw_hash[0] == pwhash, err::PWHASH_INVALID, "incorrect password");
+    CHECKC( redpack.passwd_hash == pwhash, err::PWHASH_INVALID, "incorrect password");
 
     // 5. 校验红包状态为 CREATED（未过期、未结束）
-    CHECKC(redpack.status == redpack_status::CREATED, err::EXPIRED, "redpack has expired");
+    CHECKC( redpack.status == redpack_status::CREATED, err::EXPIRED, "redpack has expired");
 
     // 6. 若是 DID 类型红包，需要做 DID 认证校验
-    bool is_auth = false;
     if ( redpack.did_required ) {
-        auto claimer_acnts = flon::account_t::idx_t(_gstate.did_contract, claimer.value);
+        auto is_auth = false;
+        auto claimer_acnts = flon::account_t::idx_t( _gstate.did_contract, claimer.value );
         for (auto claimer_acnts_iter = claimer_acnts.begin(); claimer_acnts_iter != claimer_acnts.end(); ++claimer_acnts_iter) {
             if (claimer_acnts_iter->balance.amount > 0) {
                 is_auth = true;
@@ -189,59 +180,58 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     CHECKC(claims_iter == claims_index.end(), err::NOT_REPEAT_RECEIVE, "Can't repeat to receive");
 
     // 8. 计算本次可领取红包数量（支持随机、均分模式）
-    asset redpack_quantity;
+    asset assigned_quant;
     switch( redpack.type.value ) {
         case redpack_type::RANDOM.value:
-            _assign_redpack(redpack, redpack_quantity);
+            _assign_redpack(redpack, assigned_quant);
             break;
 
         case redpack_type::MEAN.value:
-            redpack_quantity = (redpack.remain_count == 1) ? redpack.remain_quantity : redpack.total_quantity / redpack.receiver_count;
+            assigned_quant = (redpack.remaining_count == 1) ? redpack.remaining_quant : redpack.total_quant / redpack.total_count;
             break;
     }
 
     // 9. 红包资产实际转出
-    TRANSFER_OUT(contract_name, claimer, redpack_quantity, string("red pack transfer"));
+    TRANSFER_OUT( redpack.token_contract, claimer, assigned_quant, string("redpack: " + code.to_string()) )
 
     // 10. 红包主表更新剩余数量与状态
-    redpack.remain_count--;
-    redpack.remain_quantity -= redpack_quantity;
-    redpack.updated_at      = time_point_sec(current_time_point());
-    if (redpack.remain_count == 0) {
+    CHECKC( redpack.remaining_quant >= assigned_quant, err::INSUFFICIENT_QUANTITY, "insufficient redpack quantity" )
+    CHECKC( redpack.remaining_count > 0, err::INSUFFICIENT_QUANTITY, "insufficient redpack count" )
+    
+    redpack.remaining_quant -= assigned_quant;
+    redpack.remaining_count--;
+    if (redpack.remaining_count == 0) {
         redpack.status = redpack_status::FINISHED;
     }
+
+    auto now                = current_time_point();
+    redpack.updated_at      = now;
     _db.set(redpack, _self);
 
     // 11. 插入领取记录
     claims.emplace(_self, [&](auto& row) {
         row.id              = claims.available_primary_key();
-        row.redpack_code   = code;
-        row.creator         = redpack.creator;
-        row.receiver        = claimer;
-        row.quantity        = redpack_quantity;
-        row.claimed_at      = current_time_point();
+        row.redpack_code    = code;
+        row.redpack_wrapper = redpack.wrapper;
+        row.claimer         = claimer;
+        row.quantity        = assigned_quant;
+        row.claimed_at      = now;
     });
 }
 
+// revert redpack to the creator
+// if the redpack is not expired, the creator can get back the remain quantity
 void redpack::cancel( const name& code )
 {
     redpack_t redpack(code);
     CHECKC( _db.get(redpack), err::RECORD_NO_FOUND, "redpack not found" );
-    CHECKC( current_time_point() > redpack.created_at + eosio::hours(_gstate.expire_hours), err::NOT_EXPIRED, "expiration date is not reached" );
-    if(redpack.status == redpack_status::CREATED){
-        auto pw_hash = split(redpack.pw_hash, ":");
-        auto contract = pw_hash[1];
-        if (contract.size() == 0) {
-            tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
-            auto tokenlist_index = tokenlist_tbl.get_index<"by.symb"_n>();
-            auto tokenlist_iter = tokenlist_index.find(redpack.total_quantity.symbol.raw());
-            CHECKC( tokenlist_iter != tokenlist_index.end(), err::RECORD_NO_FOUND, "token list not found" );
-            TRANSFER_OUT(tokenlist_iter->token_contract, redpack.creator, redpack.remain_quantity, string("red pack cancel transfer"));
-        } else {
-            auto contract_name = name(pw_hash[1]);
-            TRANSFER_OUT(contract_name, redpack.creator, redpack.remain_quantity, string("red pack cancel transfer"));
-        }
-    }
+    CHECKC( current_time_point() > redpack.created_at + eosio::hours(_gstate.redpack_expiry_hours), err::NOT_EXPIRED, 
+            "expiration is not reached" )
+
+    CHECKC( redpack.status == redpack_status::CREATED, err::EXPIRED, "redpack has expired" )
+
+    TRANSFER_OUT(redpack.token_contract, redpack.wrapper, redpack.remaining_quant, string("redpack remaining returned") )
+    
     _db.del(redpack);
 }
 
@@ -276,19 +266,19 @@ void redpack::delclaims( const uint64_t& max_rows )
 
 void redpack::_assign_redpack(const redpack_t& redpack, asset& assigned) {
     // calc order quantity value by price
-    if ( redpack.remain_count == 1 ) {
-        assigned = redpack.remain_quantity;
+    if ( redpack.remaining_count == 1 ) {
+        assigned = redpack.remaining_quant;
         return;
     }
 
-    uint64_t quantity = redpack.remain_quantity.amount / redpack.remain_count * 2;
+    uint64_t quantity = redpack.remaining_quant.amount / redpack.remaining_count * 2;
     uint8_t precision = 0;
-    if (redpack.remain_quantity.symbol.precision() <= 2)
+    if (redpack.remaining_quant.symbol.precision() <= 2)
         precision = 0;
     else
-        precision = redpack.remain_quantity.symbol.precision() - 2;
+        precision = redpack.remaining_quant.symbol.precision() - 2;
 
-    assigned = asset( _rand(asset(quantity, redpack.remain_quantity.symbol), precision), redpack.remain_quantity.symbol );
+    assigned = asset( _rand(asset(quantity, redpack.remaining_quant.symbol), precision), redpack.remaining_quant.symbol );
 }
 
 uint64_t redpack::_rand(asset max_quantity,  uint16_t min_unit) {
