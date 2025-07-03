@@ -38,11 +38,12 @@ namespace wasm { namespace db {
 struct TG_TBL_NAME("global") global_t {
     name            admin;
     name            did_contract;
+    set<uint64_t>   dids;
     uint16_t        redpack_expiry_hours; //红包过期时间，单位小时
     asset           unwrap_unit_fee = asset(1000, SYS_SYMBOL); //unit fee for admin unwrap, 0.001 FLON
     bool            unwrap_fee_required = false; //是否对红包创建人征收手续费
 
-    EOSLIB_SERIALIZE( global_t, (admin)(did_contract)(redpack_expiry_hours)(unwrap_unit_fee)(unwrap_fee_required) )
+    EOSLIB_SERIALIZE( global_t, (admin)(did_contract)(dids)(redpack_expiry_hours)(unwrap_unit_fee)(unwrap_fee_required) )
 };
 typedef eosio::singleton< "global"_n, global_t > global_singleton;
 

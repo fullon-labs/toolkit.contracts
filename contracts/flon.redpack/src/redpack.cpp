@@ -205,10 +205,24 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
 
     // 5. DID 红包校验
     if (redpack.did_required) {
+        const auto& required_dids = _gstate.dids; // set<uint64_t>
+        CHECKC(!required_dids.empty(), err::DID_NOT_SUPPORTED, "DID not supported");
+
         auto claimer_acnts = flon::account_t::idx_t(_gstate.did_contract, claimer.value);
-        bool is_auth = std::any_of(claimer_acnts.begin(), claimer_acnts.end(),
-                                   [](const auto& acc) { return acc.balance.amount > 0; });
-        CHECKC(is_auth, err::DID_NOT_AUTH, "DID authentication required");
+
+        // 直接遍历 claimer 的 DID，逐个判断是否在 required_dids 中，匹配即退出
+        bool matched = false;
+        for (const auto& acc : claimer_acnts) {
+            if (acc.balance.amount > 0) {
+                uint64_t did = acc.balance.symbol.raw();
+                if (required_dids.count(did)) {
+                    matched = true;
+                    break;
+                }
+            }
+        }
+
+        CHECKC(matched, err::DID_NOT_AUTH, "DID not authorized");
     }
 
     // 6. 防止重复领取（索引: claimer + code）
