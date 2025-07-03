@@ -272,46 +272,69 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
 
 // revert redpack to the creator
 // if the redpack is not expired, the creator can get back the remain quantity
-void redpack::cancel( const name& code )
+void redpack::cancel(const name& code)
 {
     redpack_t redpack(code);
-    CHECKC( _db.get(redpack), err::RECORD_NO_FOUND, "redpack not found" );
-    CHECKC( current_time_point() > redpack.created_at + eosio::hours(_gstate.redpack_expiry_hours), err::NOT_EXPIRED, 
-            "expiration is not reached" )
+    CHECKC(_db.get(redpack), err::RECORD_NO_FOUND, "redpack not found");
 
-    CHECKC( redpack.status == redpack_status::CREATED, err::EXPIRED, "redpack has expired" )
+    // 判断已过期
+    CHECKC(current_time_point() > redpack.created_at + eosio::hours(_gstate.redpack_expiry_hours),
+           err::NOT_EXPIRED, "expiration is not reached");
 
-    TRANSFER_OUT(redpack.token_contract, redpack.wrapper, redpack.remaining_quant, string("redpack remaining returned") )
-    
+    // 状态判断：只允许 CREATED、SERVICING 和 FINISHED
+    CHECKC(redpack.status == redpack_status::CREATED || 
+            redpack.status == redpack_status::SERVICING ||
+            redpack.status == redpack_status::FINISHED,
+           err::STATE_MISMATCH, "redpack is not cancelable");
+
+    // 如果是 SERVICING，退还剩余金额
+    if (redpack.status == redpack_status::SERVICING && redpack.remaining_quant.amount > 0) {
+        TRANSFER_OUT(
+            redpack.token_contract,
+            redpack.wrapper,
+            redpack.remaining_quant,
+            string("redpack remaining returned"));
+    }
+
     _db.del(redpack);
 }
-
-void redpack::delclaims( const uint64_t& max_rows )
+void redpack::delclaims(const uint64_t& max_rows)
 {
-    set<name> none_exist_list;
+    set<name> missing_redpacks;
 
     claim_t::idx_t claim_idx(_self, _self.value);
     auto claim_itr = claim_idx.begin();
 
-    size_t count = 0;
-    for (; count < max_rows && claim_itr != claim_idx.end(); ) {
-        bool redpack_none_exist = ( none_exist_list.count(claim_itr->redpack_code) > 0 );
-        if (!redpack_none_exist){
-            redpack_t redpack(claim_itr->redpack_code);
-            redpack_none_exist = !_db.get(redpack);
-            if (redpack_none_exist){
-                claim_itr = claim_idx.erase(claim_itr);
-                none_exist_list.insert(claim_itr->redpack_code);
-                count++;
-            } else {
-                break;
-            }
+    uint64_t count = 0;
+    while (count < max_rows && claim_itr != claim_idx.end()) {
+        const name redpack_code = claim_itr->redpack_code;
+        bool to_delete = false;
+
+        // 1. 如果缓存中已知 redpack 不存在
+        if (missing_redpacks.count(redpack_code)) {
+            to_delete = true;
         } else {
-            claim_itr = claim_idx.erase(claim_itr);
+            // 2. 查询主表
+            redpack_t redpack(redpack_code);
+            if (!_db.get(redpack)) {
+                missing_redpacks.insert(redpack_code);
+                to_delete = true;
+            }
+        }
+
+        if (to_delete) {
+            claim_itr = claim_idx.erase(claim_itr);  // erase 后返回的就是下一个
             count++;
+        } else {
+            ++claim_itr;  // 跳过保留的记录
         }
     }
+
+    // 可选：是否必须删除至少一条
     CHECKC(count > 0, err::NONE_DELETED, "delete invalid");
+
+    // 打印调试信息（可选）
+    // print("claims deleted: ", count);
 }
 
 void redpack::_assign_redpack(const redpack_t& redpack, asset& assigned) {
