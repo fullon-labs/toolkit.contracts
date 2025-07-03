@@ -295,8 +295,7 @@ void redpack::delclaims( const uint64_t& max_rows )
 
     size_t count = 0;
     for (; count < max_rows && claim_itr != claim_idx.end(); ) {
-
-        bool redpack_none_exist = none_exist_list.count(claim_itr->redpack_code) > 0 ? true : false;
+        bool redpack_none_exist = ( none_exist_list.count(claim_itr->redpack_code) > 0 );
         if (!redpack_none_exist){
             redpack_t redpack(claim_itr->redpack_code);
             redpack_none_exist = !_db.get(redpack);
