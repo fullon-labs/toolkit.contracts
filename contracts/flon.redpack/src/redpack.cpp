@@ -285,7 +285,7 @@ void redpack::cancel(const name& code)
     CHECKC(redpack.status == redpack_status::CREATED || 
             redpack.status == redpack_status::SERVICING ||
             redpack.status == redpack_status::FINISHED,
-           err::STATE_MISMATCH, "redpack is not cancelable");
+           err::STATUS_MISMATCH, "redpack is not cancelable");
 
     // 如果是 SERVICING，退还剩余金额
     if (redpack.status == redpack_status::SERVICING && redpack.remaining_quant.amount > 0) {

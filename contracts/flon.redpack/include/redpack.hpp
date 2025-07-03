@@ -33,7 +33,8 @@ enum class err: uint8_t {
    AMOUNT_TOO_LARGE     = 23,
    FEE_NOT_REQUIRED     = 24,
    DID_NOT_SUPPORTED    = 25,
-   DID_PACK_SYMBOL_ERR  = 31
+   DID_PACK_SYMBOL_ERR  = 26,
+   STATUS_MISMATCH       = 27
 };
 
 namespace redpack_type {
