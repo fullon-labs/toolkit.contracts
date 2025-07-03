@@ -76,13 +76,20 @@ void redpack::_token_transfer(const name& from, const name& to, const asset& qua
     if (from == _self || to != _self) return;
     CHECKC(quantity.amount > 0, err::NOT_POSITIVE, "quantity must be positive")
     CHECKC( is_account(from), err::ACCOUNT_INVALID, "account invalid" );
-
-    // memo format: [ $code:$type:$count:$password_hash:$contract ]
-    auto parts = split(memo, ":");
-    CHECKC(parts.size() == 4, err::INVALID_FORMAT, "invalid memo format, arg-size must be 4" )
-
-    _handle_deposit(from, quantity, parts);
     
+    auto parts = split(memo, ":");
+    switch( parts.size() ) {
+        case 6: // deposit redpack memo format: [ $code:$type:$did_required:$count:$password_hash:$contract ]
+            _handle_deposit(from, quantity, parts);
+            break;
+
+        case 2: // fee payment memo format: [ $code:$fee_type ]
+            _handle_fee_payment(quantity, parts);
+            break;
+
+        default:
+            CHECKC(false, err::INVALID_FORMAT, "invalid memo format");
+    }
 }
 
 // -------------------------- 内部方法分离 ------------------------------
@@ -90,7 +97,7 @@ void redpack::_token_transfer(const name& from, const name& to, const asset& qua
 void redpack::_handle_deposit(const name& from, const asset& quantity, const vector<string>& parts) {
     auto token_contract = get_first_receiver();
 
-    // 校验token是否在 tokenlist 中
+    // 校验token是否在 tokenlist 中, 否则拒绝创建红包
     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
     auto tokenlist_index = tokenlist_tbl.get_index<"by.consymb"_n>();
     uint128_t consymb_id = get_unionid( token_contract, quantity.symbol.raw() );
@@ -144,6 +151,31 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
     });
 }
 
+void redpack::_handle_fee_payment(const asset& fee_quant, const vector<string>& parts) {
+    // 处理手续费支付逻辑
+    CHECKC( _gstate.unwrap_unit_fee.amount > 0, err::FEE_NOT_REQUIRED, "zero fee charged" )
+    CHECKC( _gstate.unrwap_fee_required, err::FEE_NOT_REQUIRED, "fee not required" )
+    CHECKC( fee_quant.symbol == SYS_SYMBOL, err::SYMBOL_MISMATCH, "Only FLON fees are accepted" )
+    
+    name code = name(parts[0]);
+    redpack_t redpack(code);
+    CHECKC( redpack.unwrapped_by_admin, err::ACCOUNT_INVALID, "" )
+
+    CHECKC( _db.get(redpack), err::REDPACK_EXIST, "redpack not yet created" )
+    
+    
+    auto fee_required = redpack.total_count * _gstate.unwrap_unit_fee;
+    CHECKC( fee_quant.amount >= fee_required.amount, err::FEE_NOT_POSITIVE, "insufficient fee: " + fee_required.to_string() )
+
+    TRANSFER_OUT( SYS_BANK, _gstate.admin, fee_quant, "fee to redpack: " + code.to_string() )
+
+    // 更新红包状态为 SERVICING
+    CHECKC( redpack.status == redpack_status::CREATED, err::EXPIRED, "redpack status <> CREATED" )
+    redpack.status = redpack_status::SERVICING; // 更新红包状态为 SERVICING
+    redpack.updated_at = current_time_point();
+    _db.set(redpack, _self);
+}
+
 void redpack::claimredpack(const name& claimer, const name& code, const string& pwhash)
 {
     require_auth( _gstate.admin );  // 1. 只有 admin 有权操作 - 否则pwhash有人领了，口令就暴露，容易被脚本攻击
@@ -156,8 +188,8 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     // 4. 校验密码是否一致
     CHECKC( redpack.passwd_hash == pwhash, err::PWHASH_INVALID, "incorrect password");
 
-    // 5. 校验红包状态为 CREATED（未过期、未结束）
-    CHECKC( redpack.status == redpack_status::CREATED, err::EXPIRED, "redpack has expired");
+    // 5. 校验红包状态为 SERVICING (已经完成支付)
+    CHECKC( redpack.status == redpack_status::SERVICING, err::EXPIRED, "redpack has expired");
 
     // 6. 若是 DID 类型红包，需要做 DID 认证校验
     if ( redpack.did_required ) {

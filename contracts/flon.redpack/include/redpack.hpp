@@ -31,6 +31,8 @@ enum class err: uint8_t {
    NON_RENEWAL          = 21,
    AMOUNT_TOO_SMALL     = 22,
    AMOUNT_TOO_LARGE     = 23,
+   FEE_NOT_REQUIRED     = 24,
+   DID_NOT_SUPPORTED    = 25,
    DID_PACK_SYMBOL_ERR  = 31
 };
 
@@ -41,6 +43,7 @@ namespace redpack_type {
 
 namespace redpack_status {
     static constexpr eosio::name CREATED        = "created"_n;
+    static constexpr eosio::name SERVICING      = "servicing"_n;
     static constexpr eosio::name FINISHED       = "finished"_n;
     static constexpr eosio::name CANCELLED      = "cancelled"_n;
 };
@@ -102,5 +105,5 @@ private:
     uint64_t _rand(asset max_quantity,  uint16_t min_unit);
 
     void _handle_deposit(const name& from, const asset& quantity, const vector<string>& parts);
-    // void _handle_fee_payment(const asset& quantity, const vector<string>& parts);
+    void _handle_fee_payment(const asset& fee_quant, const vector<string>& parts); 
 }; //contract redpack
