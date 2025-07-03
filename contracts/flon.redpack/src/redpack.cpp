@@ -332,19 +332,26 @@ void redpack::_assign_redpack(const redpack_t& redpack, asset& assigned) {
     assigned = asset( _rand(asset(quantity, redpack.remaining_quant.symbol), precision), redpack.remaining_quant.symbol );
 }
 
-uint64_t redpack::_rand(asset max_quantity,  uint16_t min_unit) {
-    auto mixedBlock = tapos_block_prefix() * tapos_block_num();
-    const char *mixedChar = reinterpret_cast<const char *>(&mixedBlock);
-    auto hash = sha256( (char *)mixedChar, sizeof(mixedChar));
-    int64_t min_unit_throot = power10(min_unit);
+uint64_t redpack::_rand(asset max_quantity, uint16_t min_unit) {
+    // 1. 获取区块级伪随机种子（不是真正随机，仅限奖励分配等非强安全场景）
+    uint64_t mixed = tapos_block_prefix() * tapos_block_num();
+    auto hash = sha256(reinterpret_cast<const char*>(&mixed), sizeof(mixed));
 
-    auto r1 = (uint64_t)hash.data()[0];
-    float rand = 1/min_unit_throot+r1 % 100 / 100.00;
-    int64_t round_throot = power10(max_quantity.symbol.precision() - min_unit);
-    uint64_t rand_value = (uint64_t)(max_quantity.amount * rand) / round_throot * round_throot;
-    uint64_t min_value = get_precision(max_quantity) / min_unit_throot;
-    
-    return( rand_value < min_value ? min_value : rand_value );
-    
+    // 2. 使用 hash 前 8 字节作为伪随机整数种子
+    uint64_t seed = 0;
+    memcpy(&seed, hash.data(), sizeof(seed));  // 提高分布质量
+
+    // 3. 构造精度相关参数
+    int precision = max_quantity.symbol.precision();              // 例如 6（支持 0 ~ 18）
+    int64_t unit_base = power10(precision);                       // 10^precision
+    int64_t min_unit_value = unit_base / power10(min_unit);      // 最小单位整数值，如 10^6 / 10^2 = 10^4
+
+    // 4. 可分配最大单位数（红包最大数量）
+    int64_t max_units = max_quantity.amount / min_unit_value;
+
+    // 5. 生成随机整数单位数，范围 [1, max_units]
+    uint64_t rand_units = (seed % max_units) + 1;  // 保证至少 1
+
+    // 6. 返回最终随机金额
+    return rand_units * min_unit_value;
 }
-
