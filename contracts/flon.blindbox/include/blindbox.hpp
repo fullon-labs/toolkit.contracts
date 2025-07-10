@@ -92,6 +92,12 @@ class [[eosio::contract("flon.blindbox")]] blindbox: public eosio::contract {
          [[eosio::on_notify("flon.token::transfer")]] 
         void on_transfer_flon( const name& from, const name& to, const asset& quantity, const string& memo );
     
+        ACTION init(const name& admin, const name& fund_distributor) {
+            require_auth(_self);
+            _gstate.admin = admin;
+            _gstate.fund_distributor = fund_distributor;
+        }
+
         using deal_trace_s_action = eosio::action_wrapper<"dealtrace"_n, &blindbox::dealtrace>;
     
     private:
