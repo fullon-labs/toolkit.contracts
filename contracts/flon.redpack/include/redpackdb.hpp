@@ -79,8 +79,8 @@ struct TG_TBL redpack_t {
     typedef eosio::multi_index<"redpacks"_n, redpack_t> idx_t;
 
     EOSLIB_SERIALIZE( redpack_t, (code)(assign_type)(creator)(did_required)(unwrapped_by_admin)
-                                 (passwd_hash)(total_quant)(total_count)(remaining_quant)(remaining_count)
-                                 (status)(created_at)(updated_at) )
+                                 (passwd_hash)(token_contract)(total_quant)(total_count)(remaining_quant)(remaining_count)
+                                (fee)(status)(created_at)(updated_at) )
 };
 
 struct TG_TBL claim_t {

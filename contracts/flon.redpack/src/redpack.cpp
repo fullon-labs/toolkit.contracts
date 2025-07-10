@@ -99,11 +99,12 @@ void redpack::_token_transfer(const name& from, const name& to, const asset& qua
 }
 
 // -------------------------- 内部方法分离 ------------------------------
-// memo format: [ wrap:$code:$type:$did_required:$count:$password_hash:$contract ]
+// memo format: [ wrap:$code:$type:$did_required:$count:$password_hash ]
 void redpack::_handle_deposit(const name& from, const asset& quantity, const vector<string>& parts) {
     CHECKC(parts.size() >= 6, err::INVALID_FORMAT, "invalid wrap memo format");
 
     auto token_contract = get_first_receiver();
+    print_f("🧾 deposit from: %, quantity: %, memo_parts: %\n", from, quantity, parts.size());
 
     // 校验 token 是否在白名单中
     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
@@ -114,16 +115,20 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
 
     // parts[1]: code
     name code = name(parts[1]);
+    print_f("📦 redpack code: %\n", code);
+
     redpack_t redpack(code);
     CHECKC(!_db.get(redpack), err::REDPACK_EXIST, "code already exists");
 
     // parts[2]: type
-    auto rp_type = name(stoi(parts[2]));
+    auto rp_type = name(parts[2]);
+    print_f("🎲 assign type: %\n", rp_type);
     CHECKC(rp_type == redpack_type::RANDOM || rp_type == redpack_type::MEAN, err::TYPE_INVALID, "redpack type invalid");
 
     // parts[3]: did_required
     bool did_required = (stoi(parts[3]) == 1);
-
+    print_f("🔐 did_required: %\n", did_required);
+    
     // parts[4]: count
     int count = stoi(parts[4]);
     CHECKC(count > 0, err::NOT_POSITIVE, "redpack count must be positive");
@@ -159,6 +164,8 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
         row.created_at      = now;
         row.updated_at      = now;
     });
+
+    print_f("✅ redpack [%] created, status: %, total: %, count: %\n", code, _gstate.unwrap_fee_required ? redpack_status::CREATED : redpack_status::SERVICING, quantity, count);
 }
 
 void redpack::_handle_fee_payment(const asset& fee_quant, const vector<string>& parts) {

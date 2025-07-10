@@ -2,7 +2,7 @@
 shopt -s expand_aliases
 source ~/.bashrc
 
-con=flon.rp1
+con=flon.rp3
 mreg flon $con flonian
 mset $con flon.redpack
 admin=redpackadmin
