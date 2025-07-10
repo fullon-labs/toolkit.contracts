@@ -1,6 +1,6 @@
 #include "blindboxdb.hpp"
 #include "wasm_db.hpp"
-#include <did.ntoken/did.ntoken.db.hpp>
+#include <flon.ntoken/flon.ntoken.db.hpp>
 
 using namespace std;
 using namespace wasm::db;
@@ -101,5 +101,4 @@ class [[eosio::contract("flon.blindbox")]] blindbox: public eosio::contract {
         void _one_nft( const name& owner, const uint64_t& index, booth_t& booth, nasset& nft );
         void _on_deal_trace_s( const deal_trace_s_s& deal_trace_s);
         void _add_times( const uint64_t& booth_id, const name& owner);
-        void _reward_farmer( const asset& xin_quantity, const name& farmer );
     };

@@ -1,6 +1,8 @@
 #include <flon.token.hpp>
 #include "blindbox.hpp"
-#include <did.ntoken/did.ntoken.db.hpp>
+#include <flon.ntoken/flon.ntoken.db.hpp>
+#include <flon.ntoken/flon.ntoken.hpp>
+
 #include "utils.hpp"
 #include <algorithm>
 #include <chrono>
@@ -19,7 +21,7 @@ static constexpr eosio::name active_permission{"active"_n};
 { action(permission_level{get_self(), "active"_n }, bank, "transfer"_n, std::make_tuple( _self, to, quantity, memo )).send(); }
 //给用户发放 FLON 资产奖励，实现奖励自动分发
 #define ALLOT_APPLE(farm_contract, lease_id, to, quantity, memo) \
-    {   flon::farm::allot_action(farm_contract, { {_self, active_perm} }).send( \
+    {   flon::farm::allot_action(farm_contract, { {_self, active_permission} }).send( \
             lease_id, to, quantity, memo );}
 
 void blindbox::createbooth( const name& owner,const string& title, const name& nft_contract, const name& fund_contract,
@@ -221,7 +223,6 @@ void blindbox::_transfer_token( const name& from, const name& to, const asset& q
     
     TRANSFER_N( booth.nft_contract, from, nfts , "booth: " + to_string(booth.id) )
     
-    _reward_farmer( paid, from );
 }
 
 

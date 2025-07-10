@@ -98,16 +98,6 @@ std::vector<std::string> split(const std::string& s, const std::string& delimite
     return result;
 }
 
-vector<string_view> split(string_view str, string_view delim) {
-    vector<string_view> tokens;
-    size_t start = 0, end;
-    while ((end = str.find(delim, start)) != string_view::npos) {
-        tokens.emplace_back(str.substr(start, end - start));
-        start = end + delim.length();
-    }
-    tokens.emplace_back(str.substr(start));
-    return tokens;
-}
 
 bool starts_with(string_view sv, string_view s) {
     return sv.size() >= s.size() && sv.compare(0, s.size(), s) == 0;

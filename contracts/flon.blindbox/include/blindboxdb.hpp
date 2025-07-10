@@ -1,6 +1,6 @@
 #pragma once
 
-#include <did.ntoken/did.ntoken.db.hpp>
+#include <flon.ntoken/flon.ntoken.db.hpp>
 #include "wasm_db.hpp"
 
 #include <eosio/eosio.hpp>

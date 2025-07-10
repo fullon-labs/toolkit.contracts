@@ -10,15 +10,15 @@ namespace eosiosystem {
 }
 
 #define ISSUE(bank, to, quantity, memo) \
-    {	token::issue_action act{ bank, { {_self, active_perm} } };\
+    {	token::issue_action act{ bank, { {_self, active_permission} } };\
 			act.send( to, quantity, memo );}
 
 #define BURN(bank, from, quantity) \
-    {	token::burn_action act{ bank, { {_self, active_perm} } };\
+    {	token::burn_action act{ bank, { {_self, active_permission} } };\
 			act.send( from, quantity, memo );}
 
 #define TRANSFER(bank, to, quantity, memo) \
-    {	token::transfer_action act{ bank, { {_self, active_perm} } };\
+    {	token::transfer_action act{ bank, { {_self, active_permission} } };\
 			act.send( _self, to, quantity , memo );}
          
 namespace flon {
