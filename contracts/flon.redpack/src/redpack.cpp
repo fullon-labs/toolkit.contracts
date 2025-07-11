@@ -37,7 +37,7 @@ void redpack::delisttoken( const uint64_t& token_id ) {
     _db.del( token );
 }
 
-void redpack::listtoken(const name& contract, const symbol& sym, const time_point_sec& expired_time ) {
+void redpack::listtoken(const name& contract, const symbol& sym ) {
     require_auth( _gstate.admin );
     
     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);

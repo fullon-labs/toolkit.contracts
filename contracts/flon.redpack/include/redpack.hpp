@@ -70,7 +70,7 @@ public:
         _global.set(_gstate, get_self());
     }
 
-    ACTION listtoken(const name& contract, const symbol& sym, const time_point_sec& expired_time);
+    ACTION listtoken(const name& contract, const symbol& sym);
     ACTION delisttoken( const uint64_t& token_id );
 
     [[eosio::on_notify("flon.token::transfer")]]
