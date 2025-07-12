@@ -54,6 +54,7 @@ add_subdirectory(did.ntoken)
 add_subdirectory(flon.redpack)
 add_subdirectory(flon.blindbox)
 add_subdirectory(flon.ntoken)
+add_subdirectory(price.oracle)
 
 if(BUILD_TESTS)
   add_subdirectory(test_contracts)

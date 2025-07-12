@@ -196,7 +196,7 @@ void redpack::_handle_fee_payment(const asset& fee_quant, const vector<string>& 
 void redpack::claimredpack(const name& claimer, const name& code, const string& pwhash)
 {
     // 1. 权限校验：只有 admin 可代领（防止暴露口令被脚本爆破）
-    require_auth(_gstate.admin);
+    require_auth(_gstate.claim_admin);
     // 如果未来需要开放给 claimer 自主领取，可取消注释以下行
     // CHECKC(has_auth(claimer) || has_auth(_gstate.admin), err::ACCOUNT_INVALID, "auth failed: not claimer nor admin");
 
