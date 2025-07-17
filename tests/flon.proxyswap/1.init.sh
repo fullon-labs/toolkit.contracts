@@ -2,7 +2,7 @@
 shopt -s expand_aliases
 source ~/.bashrc
 
-con=flon.pt1
+con=flon.pt3
 mreg flon $con flonian
 mtran flon $con "500 FLON"
 mset $con flon.proxyswap
@@ -23,16 +23,18 @@ mreg flon $feereceiver flonian
 mpush $con init '["'"${con}"'", "'"${oracleadmin}"'", "'"${feereceiver}"'"]' -p $con
 
 
-mpush $con addtradpair '["usdt.flon",{"sym":"6,USDT","contract":"flon.mtoken"},{"sym":"8,FLON","contract":"flon.token"},"10.000000 USDT","1.00000000 FLON",500]' -p $con
+mpush $con addtradpair '["usdt.flon",{"sym":"8,FLON","contract":"flon.token"},{"sym":"6,USDT","contract":"flon.mtoken"},"1.00000000 FLON","10.000000 USDT",500]' -p $con
 
 #USDT 买 FLON（买单）
-mpush flon.mtoken transfer '["flonian","'"${con}"'", "100.000000 USDT", "usdt.flon:buy:100.00000000 FLON:10"]' -p flonian
-mpush flon.token transfer '["flonian", "'"${con}"'", "50.00000000 FLON", "usdt.flon:sell:50.000000 USDT:10"]' -p flonian
+mpush flon.mtoken transfer '["flonian","'"${con}"'", "100.000000 USDT", "usdt.flon:buy:1.000000 USDT:10"]' -p flonian
+mpush flon.token transfer '["flonian", "'"${con}"'", "50.00000000 FLON", "usdt.flon:sell:1.000000 USDT:10"]' -p flonian
 
 #成交订单
-mpush $con finishorder '[0, "0.01000000 FLON", "0.00010000 FLON", "order filled"]' -p $oracleadmin
+mpush $con finishorder '[1, "99.00000000 FLON","1.000000 USDT" ,"1.00000000 FLON", "order filled"]' -p $oracleadmin
+mpush $con finishorder '[2, "49.500000 USDT","1.000000 USDT" ,"0.500000 USDT", "order filled"]' -p $oracleadmin
 #取消订单
-mpush $con cancelorder '[1, "order canceled by oracle"]' -p $oracleadmin
+
+mpush $con cancelorder '[3, "order canceled by oracle"]' -p $oracleadmin
 
 
 

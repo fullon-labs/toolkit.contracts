@@ -57,7 +57,7 @@ public:
                 const extended_symbol& right_symbol,
                 const asset& mini_left,
                 const asset& mini_right,
-                const uint8_t& max_slippage);
+                const uint64_t& max_slippage);
                 
     [[eosio::action]]
     void rmtradpair(const name& tpcode);
@@ -69,7 +69,11 @@ public:
     void distradpair(const name& tpcode);
 
     [[eosio::action]]
-    void finishorder(const uint64_t&  order_id,const asset& right_quant,const asset& fee, const string& memo);
+    void finishorder(const uint64_t&  order_id,
+                const asset& deal_quant,
+                const asset& deal_price,
+                const asset& fee,
+                const string& memo);
 
     [[eosio::action]]
     void cancelorder( const uint64_t&  order_id, const string&     reason );
