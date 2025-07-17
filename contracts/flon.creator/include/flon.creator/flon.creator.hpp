@@ -43,7 +43,6 @@ public:
 
         } else { // first init
             _gstate = global_t{};
-            _gstate.admin = _self;
         }
     }
 
@@ -61,6 +60,10 @@ public:
     ACTION init( const name& admin) {
         _check_admin( );
         _gstate.admin  = admin;
+    }
+    ACTION setgasquant( const asset& gas_quant) {
+        _check_admin();
+        _gstate.gas_quant  = gas_quant;
     }
 
     private:
