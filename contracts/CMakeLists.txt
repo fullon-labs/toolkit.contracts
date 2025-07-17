@@ -56,6 +56,7 @@ add_subdirectory(flon.proxyswap)
 add_subdirectory(flon.blindbox)
 add_subdirectory(flon.ntoken)
 add_subdirectory(price.oracle)
+add_subdirectory(flon.creator)
 
 if(BUILD_TESTS)
   add_subdirectory(test_contracts)
