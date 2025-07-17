@@ -70,7 +70,7 @@ public:
         _global.set(_gstate, get_self());
     }
 
-    ACTION listtoken(const name& contract, const symbol& sym, const time_point_sec& expired_time);
+    ACTION listtoken(const name& contract, const symbol& sym);
     ACTION delisttoken( const uint64_t& token_id );
 
     [[eosio::on_notify("flon.token::transfer")]]
@@ -87,15 +87,18 @@ public:
     ACTION cancel( const name& code );
     ACTION delclaims( const uint64_t& max_rows );
 
-    ACTION init(const name& admin, const uint16_t& hours, const bool& did_supported, const uint64_t& did_id, const name& did_contract) {
+    ACTION init(const name& admin, const name& claim_admin,  const uint16_t& hours, const bool& did_supported, const uint64_t& did_id, const name& did_contract) {
         require_auth( _self );
         CHECKC( is_account(admin), err::ACCOUNT_INVALID, "account invalid" );
+        CHECKC( is_account(claim_admin), err::ACCOUNT_INVALID, "account invalid" );
         CHECKC( hours > 0, err::VAILD_TIME_INVALID, "valid time must be positive" );
 
         _gstate.admin               = admin;
+        _gstate.claim_admin         = claim_admin;
         _gstate.redpack_expiry_hours = hours;
         _gstate.did_contract        = did_contract;
     }
+
 
 private:
     void _token_transfer( const name& from, const name& to, const asset& quantity, const string& memo );
