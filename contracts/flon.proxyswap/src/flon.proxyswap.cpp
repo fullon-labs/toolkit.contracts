@@ -66,21 +66,18 @@ enum class err: uint8_t {
     ORDER_NOT_OPEN       = 30,  // 订单不是open状态
     ORDER_ALREADY_HANDLED  = 31,   // 订单已处理
     PARAM_ERROR        = 32
- };
+};
 
 
- 
-    // ========== 获取币种合约工具函数 ==========
-    static name get_token_contract(const pair_t& pair, const asset& asset) {
-        if (asset.symbol == pair.left_symbol.get_symbol())
-            return pair.left_symbol.get_contract();
-        if (asset.symbol == pair.right_symbol.get_symbol())
-            return pair.right_symbol.get_contract();
-        CHECKC(false, (int)err::ACCOUNT_INVALID, "token contract not found for symbol");
-        return name();
-    }
+static name get_token_contract(const pair_t& pair, const asset& asset) {
+    if (asset.symbol == pair.left_symbol.get_symbol())
+        return pair.left_symbol.get_contract();
+    if (asset.symbol == pair.right_symbol.get_symbol())
+        return pair.right_symbol.get_contract();
+    CHECKC(false, (int)err::ACCOUNT_INVALID, "token contract not found for symbol");
+    return name();
+}
 
-// ====== 初始化全局权限(admin) ======
 void flonproxyswap::init(const name& admin, const name& oracle, const name& fee_receiver) {
     require_auth(get_self());
     _gstate.admin = admin;
@@ -94,9 +91,6 @@ void flonproxyswap::notifysettle(const order_t& order_item, const time_point_sec
     require_recipient(get_self());
 }
 
-
-
-// ====== 添加币对(admin) ======
 void flonproxyswap::addtradpair(const name& tpcode,const extended_symbol& left_symbol,const extended_symbol& right_symbol,const asset& mini_left,const asset& mini_right,const uint8_t& max_slippage) {
     
     require_auth(_gstate.admin);
@@ -154,9 +148,6 @@ void flonproxyswap::enabtradpair(const name& tpcode) {
     });
 }
 
-
-
-/// ====== 用户下单（转账触发） ======
 void flonproxyswap::on_transfer(const name& from, const name& to, const asset& quantity, const string& memo) {
     if (to != get_self() || from == get_self()) return;
     // 假设 memo = "tpcode:type:price:slippage"
@@ -169,17 +160,13 @@ void flonproxyswap::on_transfer(const name& from, const name& to, const asset& q
     auto slippage_str = params[3];
 
     name tpcode(tpcode_str);
-    eosio::name ordertype;
-    if (type_str == "buy")       ordertype = order_type::BUY;
-    else if (type_str == "sell") ordertype = order_type::SELL;
-    else CHECKC(false, err::INVALID_FORMAT, "type must be buy or sell");
+    eosio::name swap_order_type;
+    CHECKC(type_str == "buy" || type_str == "sell", err::INVALID_FORMAT, "type must be buy or sell");
+    swap_order_type = (type_str == "buy") ? order_type::BUY : order_type::SELL;
 
     CHECKC(!slippage_str.empty(), err::INVALID_FORMAT, "slippage missing");
     for (char c : slippage_str) CHECKC(isdigit(c), err::INVALID_FORMAT, "slippage must be integer");
     int8_t slippage = std::stoll(slippage_str);
-
-
-
 
     pair_table pairs(get_self(), get_self().value);
     auto pitr = pairs.find(tpcode.value);
@@ -190,51 +177,48 @@ void flonproxyswap::on_transfer(const name& from, const name& to, const asset& q
     asset price = asset_from_string(price_str);
     CHECKC(price.amount > 0, err::INVALID_FORMAT, "price must be positive");
     // 检查 symbol、精度是否符合预期（比如和币对右币种/左币种一致）
-    if(ordertype == order_type::BUY) {
+    if(swap_order_type == order_type::BUY) {
         CHECKC(price.symbol == pitr->right_symbol.get_symbol(), err::SYMBOL_MISMATCH, "price symbol mismatch for buy");
     } else {
         CHECKC(price.symbol == pitr->left_symbol.get_symbol(), err::SYMBOL_MISMATCH, "price symbol mismatch for buy");
     }
 
-
     CHECKC(quantity.amount > 0, err::NOT_POSITIVE, "quantity must be positive");
     CHECKC(slippage >= 0 && slippage <= pitr->max_slippage, err::PARAM_ERROR, "slippage out of range");
     // 校验币种和精度
-    if (ordertype == order_type::BUY) {
+
+    asset zero_fee = asset(0, quantity.symbol);
+    asset deal_quantity ;
+    if (swap_order_type == order_type::BUY) {
         CHECKC(quantity.symbol == pitr->left_symbol.get_symbol(), err::SYMBOL_MISMATCH, "symbol mismatch for buy");
         CHECKC(quantity >= pitr->mini_left, err::AMOUNT_TOO_SMALL, "below mini_left");
+        deal_quantity = asset(0, pitr->right_symbol.get_symbol());
     } else {
         CHECKC(quantity.symbol == pitr->right_symbol.get_symbol(), err::SYMBOL_MISMATCH, "symbol mismatch for sell");
         CHECKC(quantity >= pitr->mini_right, err::AMOUNT_TOO_SMALL, "below mini_right");
+        deal_quantity = asset(0, pitr->left_symbol.get_symbol());
     }
 
-    // 目标币种 symbol，初始化 0 值，防止 symbol/精度出错
-    asset zero_out = (ordertype == order_type::BUY) 
-                                ? asset(0, pitr->right_symbol.get_symbol())
-                                : asset(0, pitr->left_symbol.get_symbol());
-    asset zero_fee = asset(0, quantity.symbol);
-    
     order_table orders(get_self(), get_self().value);
     auto new_id = orders.available_primary_key();
 
     orders.emplace(get_self(), [&](auto& row) {
-        row.order_id = new_id;
-        row.owner = from;
-        row.tpcode = tpcode;
-        row.type = ordertype;
-        row.left_quant = quantity;
-        row.price = price;  
-        row.slippage = slippage;
-        row.right_quant = zero_out;
-        row.refund = asset(0, quantity.symbol);
-        row.status = order_status::CREATED;
-        row.fee = asset(0, quantity.symbol);
-        row.memo = memo;
-        row.created_at = time_point_sec(current_time_point());
-        row.updated_at = time_point_sec(current_time_point());
+        row.order_id    = new_id;
+        row.owner       = from;
+        row.tpcode      = tpcode;
+        row.type        = swap_order_type;
+        row.left_quant  = quantity;
+        row.price       = price;
+        row.slippage    = slippage;
+        row.right_quant = deal_quantity;
+        row.refund      = asset(0, quantity.symbol);
+        row.status      = order_status::CREATED;
+        row.fee         = asset(0, quantity.symbol);
+        row.memo        = memo;
+        row.created_at  = time_point_sec(current_time_point());
+        row.updated_at  = time_point_sec(current_time_point());
     });
 }
-
 
 // ========== 订单完成，oracle 权限 ==========
 void flonproxyswap::finishorder(const uint64_t& order_id,const asset& right_quant,const asset& fee,const string& memo) {
@@ -282,7 +266,6 @@ void flonproxyswap::finishorder(const uint64_t& order_id,const asset& right_quan
     auto ts =  time_point_sec(current_time_point()) ;
     NOTIFY_SETTLE_ACTION( order_item, ts);
     orders.erase(oitr);
-
 }
 
 // ========== 订单取消，oracle 权限 ==========
@@ -313,9 +296,9 @@ void flonproxyswap::cancelorder(const uint64_t& order_id,const string& memo) {
     order_t order_item = *oitr;
     // 更新订单状态
     orders.modify(oitr, same_payer, [&](auto& row) {
-        row.refund = row.left_quant;
-        row.status = order_status::CANCELLED;
-        row.memo = memo;
+        row.refund  = row.left_quant;
+        row.status  = order_status::CANCELLED;
+        row.memo    = memo;
         row.updated_at = time_point_sec(current_time_point());
     });
 
@@ -324,7 +307,6 @@ void flonproxyswap::cancelorder(const uint64_t& order_id,const string& memo) {
     orders.erase(oitr);
 }
 
-// ========== 修改管理员权限 ==========
 void flonproxyswap::setadmin(const name& new_admin) {
     require_auth(_gstate.admin);
 
@@ -332,7 +314,6 @@ void flonproxyswap::setadmin(const name& new_admin) {
     _global.set(_gstate, get_self());
 }
 
-// ========== 修改预言机权限 ==========
 void flonproxyswap::setoracle(const name& new_oracle) {
     require_auth(_gstate.admin);
 

@@ -3,11 +3,10 @@
 #include <eosio/eosio.hpp>
 #include <eosio/asset.hpp>
 #include <string>
-#include "flon.proxyswap.db.hpp"   // 数据表结构
+#include "flon.proxyswap.db.hpp"
 using namespace eosio;
 using namespace wasm::db;
 using namespace std;
-
 
 namespace order_status {
     static constexpr eosio::name CREATED        = "created"_n;
@@ -24,9 +23,6 @@ namespace order_type {
     static constexpr eosio::name BUY        = "buy"_n;
     static constexpr eosio::name SELL      = "sell"_n;
 };
-
-
-
 
 
 namespace flon {
@@ -52,38 +48,35 @@ public:
         _global.set(_gstate, get_self());
     }
 
-    // ---- 初始化全局权限(admin) ----
     [[eosio::action]]
     void init(const name& admin, const name& oracle, const name& fee_receiver);
 
-    // ---- 添加币对(admin) ----
     [[eosio::action]]
-    void addtradpair(const name& tpcode,const extended_symbol& left_symbol,const extended_symbol& right_symbol,const asset& mini_left,const asset& mini_right,const uint8_t& max_slippage);
-    // ---- 删除币对(admin) ----
+    void addtradpair(const name& tpcode,
+                const extended_symbol& left_symbol,
+                const extended_symbol& right_symbol,
+                const asset& mini_left,
+                const asset& mini_right,
+                const uint8_t& max_slippage);
+                
     [[eosio::action]]
     void rmtradpair(const name& tpcode);
 
-    // 启用币对（admin权限）
     [[eosio::action]]
     void enabtradpair(const name& tpcode);
 
-    // 禁用币对（admin权限）
     [[eosio::action]]
     void distradpair(const name& tpcode);
 
-    // ---- 订单完成(oracle) ----
     [[eosio::action]]
     void finishorder(const uint64_t&  order_id,const asset& right_quant,const asset& fee, const string& memo);
 
-    // ---- 订单取消(oracle) ----
     [[eosio::action]]
     void cancelorder( const uint64_t&  order_id, const string&     reason );
 
-    // ---- 用户下单（转账触发）----
     [[eosio::on_notify("*::transfer")]]
      void on_transfer(const name& from, const name& to, const asset& quantity, const string& memo);
 
-    // ---- 可选: 修改管理员/预言机 ----
     [[eosio::action]]
     void setadmin(const name& new_admin);
 
@@ -92,8 +85,6 @@ public:
     
     [[eosio::action]]
     void notifysettle(const order_t& order_item, const time_point_sec& curr_ts);
-
-
 
 };
 
