@@ -218,13 +218,22 @@ void flonproxyswap::on_transfer(const name& from, const name& to, const asset& q
     });
 }
 
-void flonproxyswap::finishorder(const uint64_t& order_id,const asset& deal_quant,const asset& deal_price,const asset& fee,const string& memo) {
+void flonproxyswap::finishorder(const uint64_t& order_id,const asset& order_quant ,const asset& deal_quant, const asset& deal_price,const asset& fee,const string& memo) {
     require_auth(_gstate.oracle);
 
     order_table orders(get_self(), get_self().value);
     auto oitr = orders.find(order_id);
     CHECKC(oitr != orders.end(),  err::RECORD_NO_FOUND, "order not found");
     CHECKC(oitr->status == order_status::CREATED, err::ORDER_NOT_OPEN, "order not in pending state");
+
+    // 必须和订单记录的初始支付金额一致
+    if (oitr->type == order_type::BUY) {
+        CHECKC(order_quant == oitr->right_quant, err::PARAM_ERROR, "order_quant mismatch with original right_quant (buy)");
+    } else if (oitr->type == order_type::SELL) {
+        CHECKC(order_quant == oitr->left_quant, err::PARAM_ERROR, "order_quant mismatch with original left_quant (sell)");
+    } else {
+        CHECKC(false, err::INVALID_FORMAT, "invalid order type");
+    }
 
     // 取得币对信息
     pair_table pairs(get_self(), get_self().value);

@@ -70,6 +70,7 @@ public:
 
     [[eosio::action]]
     void finishorder(const uint64_t&  order_id,
+                const asset& order_quant,
                 const asset& deal_quant,
                 const asset& deal_price,
                 const asset& fee,
