@@ -71,12 +71,12 @@ static name get_token_contract(const pair_t& pair, const asset& asset) {
     return name();
 }
 
-void flonproxyswap::init(const name& admin, const name& oracle, const name& fee_receiver) {
+void flonproxyswap::init(const name& admin, const name& oracle, const name& fee_receiver, const uint64_t& last_order_id) {
     require_auth(get_self());
     _gstate.admin = admin;
     _gstate.oracle = oracle;
     _gstate.fee_receiver = fee_receiver;
-    _gstate.last_order_id = 0;
+    _gstate.last_order_id = last_order_id == 0 ? 0 : last_order_id;
     _global.set(_gstate, get_self());
 }
 

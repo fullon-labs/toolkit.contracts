@@ -6,9 +6,6 @@ con=flon.pt4
 mreg flon $con flonian
 mtran flon $con "500 FLON"
 
-
-mtran flon $con "500 FLON"
-
 mset $con flon.proxyswap
 
 mreg flon $admin flonian
@@ -24,7 +21,7 @@ mreg flon $feereceiver flonian
 
 
 
-mpush $con init '["'"${con}"'", "'"${oracleadmin}"'", "'"${feereceiver}"'"]' -p $con
+mpush $con init '["'"${con}"'", "'"${oracleadmin}"'", "'"${feereceiver}"'",0]' -p $con
 
 
 mpush $con addtradpair '["usdt.flon",{"sym":"8,FLON","contract":"flon.token"},{"sym":"6,USDT","contract":"flon.mtoken"},"1.00000000 FLON","10.000000 USDT",500]' -p $con

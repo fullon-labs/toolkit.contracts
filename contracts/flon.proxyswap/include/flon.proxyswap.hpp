@@ -49,7 +49,7 @@ public:
     }
 
     [[eosio::action]]
-    void init(const name& admin, const name& oracle, const name& fee_receiver);
+    void init(const name& admin, const name& oracle, const name& fee_receiver, const uint64_t& last_order_id);
 
     [[eosio::action]]
     void addtradpair(const name& tpcode,
