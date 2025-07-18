@@ -80,7 +80,7 @@ void flonproxyswap::init(const name& admin, const name& oracle, const name& fee_
     _global.set(_gstate, get_self());
 }
 
-void flonproxyswap::notifysettle(const order_t& order_item, const time_point_sec& curr_ts ) {
+void flonproxyswap::notifysettle(const order_t& order_item, const time_point& curr_ts ) {
     require_auth(get_self());
     require_recipient(get_self());
 }
@@ -213,8 +213,8 @@ void flonproxyswap::on_transfer(const name& from, const name& to, const asset& q
         row.status             = order_status::CREATED;
         row.fee                = asset(0, quantity.symbol);
         row.memo               = memo;
-        row.created_at         = time_point_sec(current_time_point());
-        row.updated_at         = time_point_sec(current_time_point());
+        row.created_at         = time_point(current_time_point());
+        row.updated_at         = time_point(current_time_point());
     });
 }
 
@@ -275,10 +275,10 @@ void flonproxyswap::finishorder(const uint64_t& order_id,const asset& order_quan
         row.status = order_status::FINISHED;
         row.memo = memo;
         row.deal_price = deal_price;
-        row.updated_at = time_point_sec(current_time_point());
+        row.updated_at = time_point(current_time_point());
     });
 
-    auto ts =  time_point_sec(current_time_point()) ;
+    auto ts =  time_point(current_time_point()) ;
     order_t order_item = *oitr;
     NOTIFY_SETTLE_ACTION( order_item, ts);
     orders.erase(oitr);
@@ -319,10 +319,10 @@ void flonproxyswap::cancelorder(const uint64_t& order_id,const string& memo) {
         row.refund_quant  = refund_quant;
         row.status        = order_status::CANCELLED;
         row.memo          = memo;
-        row.updated_at    = time_point_sec(current_time_point());
+        row.updated_at    = time_point(current_time_point());
     });
 
-    auto ts =  time_point_sec(current_time_point()) ;
+    auto ts =  time_point(current_time_point()) ;
     order_t order_item = *oitr;
     NOTIFY_SETTLE_ACTION( order_item, ts);
     orders.erase(oitr);

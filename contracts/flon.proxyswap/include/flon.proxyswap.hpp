@@ -89,7 +89,7 @@ public:
     void setoracle(const name& new_oracle);
     
     [[eosio::action]]
-    void notifysettle(const order_t& order_item, const time_point_sec& curr_ts);
+    void notifysettle(const order_t& order_item, const time_point& curr_ts);
 
 };
 
