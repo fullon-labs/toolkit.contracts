@@ -15,7 +15,7 @@ namespace order_status {
 };
 
 namespace pair_status {
-    static constexpr eosio::name ENABLED        = "able"_n;
+    static constexpr eosio::name ENABLED        = "enable"_n;
     static constexpr eosio::name DISABLED      = "disable"_n;
 };
 

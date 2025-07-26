@@ -52,7 +52,7 @@ mpush $con setoracle '["neworacle"]' -p $con
 mpush $con rmtradpair '["usdt.flon"]' -p $con
 
 
-mpush $con enabtradpair '["flon.usdt"]' -p $con
+mpush $con enabtradpair '["btc.usdt"]' -p $con
 
 
 mpush $con distradpair '["flon.usdt"]' -p $con
