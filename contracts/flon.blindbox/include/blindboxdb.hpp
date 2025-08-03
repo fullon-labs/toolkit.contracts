@@ -49,7 +49,7 @@ enum class err: uint8_t {
 namespace wasm { namespace db {
 
 
-#define TBL struct [[eosio::table, eosio::contract("flon.blindbox")]]
+// #define TBL struct [[eosio::table, eosio::contract("flon.blindbox")]]
 #define TBL_NAME(name) struct [[eosio::table(name), eosio::contract("flon.blindbox")]]
 
 TBL_NAME("global") global_t {

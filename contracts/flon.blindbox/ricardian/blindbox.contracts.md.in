@@ -11,7 +11,7 @@ icon: @ICON_BASE_URL@/@TOKEN_ICON_URI@
 initilize & maintain contract states
 
 
-<h1 class="contract">delisttoken</h1>
+<h1 class="contract">enablebooth</h1>
 
 ---
 spec_version: "0.1.0"
@@ -23,7 +23,7 @@ icon: @ICON_BASE_URL@/@TOKEN_ICON_URI@
 Delete a token from a redpack supported token list
 
 
-<h1 class="contract">listtoken</h1>
+<h1 class="contract">createbooth</h1>
 
 ---
 spec_version: "0.1.0"
@@ -34,9 +34,9 @@ icon: @ICON_BASE_URL@/@TOKEN_ICON_URI@
 
 Add a new token into the redpack supported token list
 
-<h1 class="contract"> claimredpack </h1>redpack
+<h1 class="contract"> setboothtime </h1>redpack
 
-<h1 class="contract"> propose </h1>
+<h1 class="contract"> closebooth </h1>
 
 ---
 spec_version: "0.2.0"
@@ -47,7 +47,7 @@ icon: @ICON_BASE_URL@/@TRANSFER_ICON_URI@
 
 Any user can propose to add advance unlock timepoints to an existing lock plan
 
-<h1 class="contract"> approve </h1>
+<h1 class="contract"> dealtrace </h1>
 
 ---
 spec_version: "0.1.0"

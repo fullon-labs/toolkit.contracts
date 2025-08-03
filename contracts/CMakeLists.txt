@@ -54,7 +54,6 @@ add_subdirectory(did.ntoken)
 add_subdirectory(flon.redpack)
 add_subdirectory(flon.proxyswap)
 add_subdirectory(flon.blindbox)
-add_subdirectory(flon.ntoken)
 add_subdirectory(price.oracle)
 add_subdirectory(flon.creator)
 

@@ -17,8 +17,8 @@ using namespace std;
 static constexpr symbol   SYS_SYMBOL          = symbol(symbol_code("FLON"), 8);
 static constexpr eosio::name active_permission{"active"_n};
 
-#define TRANSFER(bank, to, quantity, memo) \
-{ action(permission_level{get_self(), "active"_n }, bank, "transfer"_n, std::make_tuple( _self, to, quantity, memo )).send(); }
+// #define TRANSFER(bank, to, quantity, memo) \
+// { action(permission_level{get_self(), "active"_n }, bank, "transfer"_n, std::make_tuple( _self, to, quantity, memo )).send(); }
 //给用户发放 FLON 资产奖励，实现奖励自动分发
 #define ALLOT_APPLE(farm_contract, lease_id, to, quantity, memo) \
     {   flon::farm::allot_action(farm_contract, { {_self, active_permission} }).send( \
