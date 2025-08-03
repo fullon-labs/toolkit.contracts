@@ -6,6 +6,7 @@
 #include <eosio/singleton.hpp>
 #include <eosio/system.hpp>
 #include <eosio/time.hpp>
+#include "flon.ntoken/flon.ntoken.db.hpp"
 
 using namespace eosio;
 using namespace std;

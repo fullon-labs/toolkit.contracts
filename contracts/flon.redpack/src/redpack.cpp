@@ -1,7 +1,6 @@
 
 #include <flon.token.hpp>
 #include "redpack.hpp"
-#include <did.ntoken/did.ntoken.db.hpp>
 #include "utils.hpp"
 #include <algorithm>
 #include <chrono>
