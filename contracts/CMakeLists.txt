@@ -57,7 +57,7 @@ add_subdirectory(flon.blindbox)
 add_subdirectory(flon.ntoken)
 add_subdirectory(price.oracle)
 add_subdirectory(flon.creator)
-
+add_subdirectory(tokensummary)
 if(BUILD_TESTS)
   add_subdirectory(test_contracts)
 endif()
