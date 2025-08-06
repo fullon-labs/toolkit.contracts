@@ -30,12 +30,15 @@ static constexpr symbol SOL        = symbol(symbol_code("SOL"), 9);
 static constexpr symbol STT        = symbol(symbol_code("STT"), 8);   
 static constexpr symbol GAMO       = symbol(symbol_code("GAMO"), 8);   
 
-
+struct TokenSummary {
+    std::vector<asset> tokens;
+};
 class [[eosio::contract("tokensummary")]] tokensummary : public contract {
 public:
     using contract::contract;
 
-    ACTION view(const name& account);
+    [[eosio::action]]
+    TokenSummary view(const name& account);
 
 private:
     asset get_balance(const name& bank, const symbol& symb, const name& account) ;
