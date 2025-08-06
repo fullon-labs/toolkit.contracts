@@ -49,7 +49,7 @@ public:
     }
 
     [[eosio::action]]
-    void init(const name& admin, const name& oracle, const name& fee_receiver);
+    void init(const name& admin, const name& oracle, const name& fee_receiver, const uint64_t& last_order_id);
 
     [[eosio::action]]
     void addtradpair(const name& tpcode,
@@ -70,6 +70,7 @@ public:
 
     [[eosio::action]]
     void finishorder(const uint64_t&  order_id,
+                const asset& order_quant,
                 const asset& deal_quant,
                 const asset& deal_price,
                 const asset& fee,
@@ -88,7 +89,7 @@ public:
     void setoracle(const name& new_oracle);
     
     [[eosio::action]]
-    void notifysettle(const order_t& order_item, const time_point_sec& curr_ts);
+    void notifysettle(const order_t& order_item, const time_point& curr_ts);
 
 };
 

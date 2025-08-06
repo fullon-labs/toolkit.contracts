@@ -64,8 +64,8 @@ struct [[eosio::table("orders"), eosio::contract("flon.proxyswap")]] order_t {
     name           status;              // created/finished/cancelled
     asset          fee;                 // 手续费
     string         memo;
-    time_point_sec created_at;
-    time_point_sec updated_at;
+    time_point     created_at;
+    time_point     updated_at;
 
     uint64_t primary_key() const { return order_id; }
     uint64_t by_owner()    const { return owner.value; }
