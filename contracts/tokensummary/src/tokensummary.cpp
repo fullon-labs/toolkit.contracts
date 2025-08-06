@@ -20,10 +20,9 @@ asset tokensummary::get_balance(const name& bank, const symbol& symb, const name
       return asset(0, symb);
 }
 
-TokenSummary tokensummary::view(const name& account) {
+void tokensummary::view(const name& account) {
     // 1. 查询各币余额
-   
-    std::vector<asset> coins = {
+    std::vector<asset> tokens = {
         { get_balance(SYS_BANK,     FLON,   account)  },
         { get_balance(CISUM_BANK,   CISUM,  account)  },
         { get_balance(MIRROR_BANK,  USDT,   account)  },
@@ -41,20 +40,21 @@ TokenSummary tokensummary::view(const name& account) {
         { get_balance(MIRROR_BANK,  GAMO,   account)  }  
     };
 
-    return TokenSummary { coins };
+    // return TokenSummary { tokens };
 
-    // // 2. 拼接非零资产
-    // string res = "Asset currency view >>>\n[\n";
-    // bool first = true;
-    // for (const auto& c : coins) {
-    //     if (c.bal.amount == 0) continue;
-    //     if (!first) res += ",\n";
-    //     res += "  \"" + c.label + ": " + c.bal.to_string() + "\"";
-    //     first = false;
-    // }
-    // res += "\n]";
+    // 2. 拼接非零资产
+    string res = "Account currency view >>>\n[\n";
+    bool first = true;
+    for (const auto& token : tokens) {
+        if (token.amount == 0) continue;
 
-    // check(false, res);
+        if (!first) res += ",\n";
+        res += "  \"" + token.to_string() + "\"";
+        first = false;
+    }
+    res += "\n]";
+
+    check(false, res);
 }
 
 

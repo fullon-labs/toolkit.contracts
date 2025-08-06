@@ -38,7 +38,7 @@ public:
     using contract::contract;
 
     [[eosio::action]]
-    TokenSummary view(const name& account);
+    void view(const name& account);
 
 private:
     asset get_balance(const name& bank, const symbol& symb, const name& account) ;
