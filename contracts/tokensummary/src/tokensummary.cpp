@@ -29,25 +29,21 @@ void tokensummary::view(const name& account) {
         string label;
     };
     std::vector<CoinItem> coins = {
-        { get_balance(SYS_BANK,    FLON,   account), "FLON"   },
-        { get_balance(MIRROR_BANK, USDT,   account), "USDT"   },
-        { get_balance(MIRROR_BANK, USDC,   account), "USDC"   },
-        { get_balance(MIRROR_BANK, ETH,    account), "ETH"    },
-        { get_balance(MIRROR_BANK, BTC,    account), "BTC"    },
-        { get_balance(MIRROR_BANK, BNB,    account), "BNB"    },
-        { get_balance(MIRROR_BANK, EOS,    account), "EOS"    },
-        { get_balance(MIRROR_BANK, TRX,    account), "TRX"    },
-        { get_balance(MIRROR_BANK, BUSD,   account), "BUSD"   },
-        { get_balance(MIRROR_BANK, DAI,    account), "DAI"    },
-        { get_balance(MIRROR_BANK, TUSD,   account), "TUSD"   },
-        { get_balance(MIRROR_BANK, MATIC,  account), "MATIC"  },
-        { get_balance(MIRROR_BANK, DOGE,   account), "DOGE"   },
-        { get_balance(MIRROR_BANK, SHIB,   account), "SHIB"   },
-        { get_balance(MIRROR_BANK, SOL,    account), "SOL"    },
-        { get_balance(MIRROR_BANK, STC,    account), "STC"    },
-        { get_balance(MIRROR_BANK, STE,    account), "STE"    },
-        { get_balance(MIRROR_BANK, STT,    account), "STT"    },
-        { get_balance(MIRROR_BANK, GAMO,   account), "GAMO"   }  
+        { get_balance(SYS_BANK,     FLON,   account), "FLON"   },
+        { get_balance(CISUM_BANK,   CISUM,  account), "CISUM"  },
+        { get_balance(MIRROR_BANK,  USDT,   account), "USDT"   },
+        { get_balance(MIRROR_BANK,  USDC,   account), "USDC"   },
+        { get_balance(MIRROR_BANK,  ETH,    account), "ETH"    },
+        { get_balance(MIRROR_BANK,  BTC,    account), "BTC"    },
+        { get_balance(MIRROR_BANK,  BNB,    account), "BNB"    },
+        { get_balance(MIRROR_BANK,  TRX,    account), "TRX"    },
+        { get_balance(MIRROR_BANK,  BUSD,   account), "BUSD"   },
+        { get_balance(MIRROR_BANK,  DAI,    account), "DAI"    },
+        { get_balance(MIRROR_BANK,  DOGE,   account), "DOGE"   },
+        { get_balance(MIRROR_BANK,  SHIB,   account), "SHIB"   },
+        { get_balance(MIRROR_BANK,  SOL,    account), "SOL"    },
+        { get_balance(MIRROR_BANK,  STT,    account), "STT"    },
+        { get_balance(MIRROR_BANK,  GAMO,   account), "GAMO"   }  
     };
 
     // 2. 拼接非零资产
