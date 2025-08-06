@@ -24,18 +24,28 @@ mreg flon $feereceiver flonian
 mpush $con init '["'"${con}"'", "'"${oracleadmin}"'", "'"${feereceiver}"'",0]' -p $con
 
 
-mpush $con addtradpair '["usdt.flon",{"sym":"8,FLON","contract":"flon.token"},{"sym":"6,USDT","contract":"flon.mtoken"},"1.00000000 FLON","10.000000 USDT",500]' -p $con
+mpush $con addtradpair '["btc.usdt", {"sym":"8,BTC","contract":"flon.mtoken"},{"sym":"6,USDT","contract":"flon.mtoken"},"0.00013000 BTC","15.000000 USDT",500]' -p $con
+mpush $con addtradpair '["eth.usdt", {"sym":"8,ETH","contract":"flon.mtoken"},{"sym":"6,USDT","contract":"flon.mtoken"},"0.00500000 ETH","15.000000 USDT",500]' -p $con
+
+
 
 #USDT 买 FLON（买单）
-mpush flon.mtoken transfer '["flonian","'"${con}"'", "100.000000 USDT", "usdt.flon:buy:1.000000 USDT:10"]' -p flonian
-mpush flon.token transfer '["flonian", "'"${con}"'", "50.00000000 FLON", "usdt.flon:sell:1.000000 USDT:10"]' -p flonian
+# 参数说明：
+# ["from", "to", "quantity", "memo"]
+# from: flonian
+# to: $con (合约账户)
+# quantity: 100.000000 USDT
+# memo: "btc.usdt:buy:130000.000000 USDT:10" （交易对:操作类型:价格:滑点）
+mpush flon.mtoken transfer '["flonian","'"${con}"'", "100.000000 USDT", "btc.usdt:buy:130000.000000 USDT:10"]' -p flonian
+
+mpush flon.mtoken transfer '["flonian", "'"${con}"'", "0.00020000 BTC", "btc.usdt:sell:130000.000000 USDT:10"]' -p flonian
 
 #成交订单
-mpush $con finishorder '[1, "100.000000 USDT","99.00000000 FLON","1.000000 USDT" ,"1.00000000 FLON", "order filled"]' -p $oracleadmin
+mpush $con finishorder '[10, "100.000000 USDT","99.00000000 FLON","1.000000 USDT" ,"1.00000000 FLON", "order filled"]' -p $oracleadmin
 #金额不一样是否报错
 mpush $con finishorder '[2, "40.00000000 FLON","49.500000 USDT","1.000000 USDT" ,"0.500000 USDT", "order filled"]' -p $oracleadmin
 #金额一样
-mpush $con finishorder '[2, "50.00000000 FLON","49.500000 USDT","1.000000 USDT" ,"0.500000 USDT", "order filled"]' -p $oracleadmin
+mpush $con finishorder '[11, "50.00000000 FLON","49.500000 USDT","1.000000 USDT" ,"0.500000 USDT", "order filled"]' -p $oracleadmin
 #取消订单
 
 mpush $con cancelorder '[3, "order canceled by oracle"]' -p $oracleadmin
@@ -48,10 +58,10 @@ mpush $con setadmin '["flon.ps9"]' -p $con
 mpush $con setoracle '["neworacle"]' -p $con
 
 
-mpush $con rmtradpair '["usdt.flon"]' -p $con
+mpush $con rmtradpair '["btc.usdt"]' -p $con
 
 
-mpush $con enabtradpair '["usdt.flon"]' -p $con
+mpush $con enabtradpair '["btc.usdt"]' -p $con
 
 
-mpush $con distradpair '["usdt.flon"]' -p $con
+mpush $con distradpair '["flon.usdt"]' -p $con
