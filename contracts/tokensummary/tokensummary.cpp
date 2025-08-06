@@ -32,7 +32,7 @@ public:
       auto eth_bal     = get_balance(MIRROR_BANK, ETH,    account);
       auto bnb_bal     = get_balance(MIRROR_BANK, BNB,    account);
 
-      auto res          = "Asset currency view >>>    \n[\n  \""
+      auto res          = "Asset token summary >>>    \n[\n  \""
                            + flon_bal.to_string()  + "\",\n  \"" 
                            + elon_bal.to_string()  + "\",\n  \"" 
                            + usdt_bal.to_string()  + "\",\n  \""
