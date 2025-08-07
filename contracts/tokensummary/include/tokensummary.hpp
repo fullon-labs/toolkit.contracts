@@ -40,13 +40,8 @@ class [[eosio::contract("tokensummary")]] tokensummary : public contract {
 public:
     using contract::contract;
 
-    [[eosio::action]]
-    TokenSummary view(const name& account);
-
     [[eosio::action, eosio::read_only]] 
-    std::string version() {  
-        return CONTRACT_VERSION;                                 
-    } 
+    TokenSummary view(const name& account);
 
 private:
     asset get_balance(const name& bank, const symbol& symb, const name& account) ;
