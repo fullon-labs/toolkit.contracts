@@ -23,20 +23,20 @@ asset tokensummary::get_balance(const name& bank, const symbol& symb, const name
 TokenSummary tokensummary::view(const name& account) {
     std::vector<asset> result;
     std::vector<std::pair<name, symbol>> tokenlist = {
-        {SYS_BANK, FLON},
-        {MIRROR_BANK, USDT},
-        {MIRROR_BANK, USDC},
-        {MIRROR_BANK, ETH},
-        {MIRROR_BANK, BTC},
-        {MIRROR_BANK, BNB},
-        {MIRROR_BANK, TRX},
-        {MIRROR_BANK, BUSD},
-        {MIRROR_BANK, DAI},
-        {MIRROR_BANK, DOGE},
-        {MIRROR_BANK, SHIB},
-        {MIRROR_BANK, SOL},
-        {MIRROR_BANK, STT},
-        {MIRROR_BANK, GAMO}
+        { SYS_BANK,     FLON },
+        { MIRROR_BANK,  USDT },
+        { MIRROR_BANK,  USDC },
+        { MIRROR_BANK,  ETH  },
+        { MIRROR_BANK,  BTC  },
+        { MIRROR_BANK,  BNB  },
+        { MIRROR_BANK,  TRX  },
+        { MIRROR_BANK,  BUSD },
+        { MIRROR_BANK,  DAI  },
+        { MIRROR_BANK,  DOGE },
+        { MIRROR_BANK,  SHIB },
+        { MIRROR_BANK,  SOL  },
+        { MIRROR_BANK,  STT  },
+        { MIRROR_BANK,  GAMO }
     };
 
     for (const auto& item : tokenlist) {

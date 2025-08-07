@@ -5,6 +5,8 @@
 
 namespace flon {
 
+#define CONTRACT_VERSION "v1.0.0"
+
 using std::string;
 using namespace eosio;
 
@@ -13,7 +15,6 @@ static constexpr symbol FLON       = symbol(symbol_code("FLON"), 8);
 
 static constexpr name CISUM_BANK   = "cisum.token"_n;
 static constexpr symbol CISUM      = symbol(symbol_code("CISUM"), 8);
-
 
 static constexpr name MIRROR_BANK  = "flon.mtoken"_n;
 static constexpr symbol USDT       = symbol(symbol_code("USDT"), 6);
@@ -30,11 +31,12 @@ static constexpr symbol SOL        = symbol(symbol_code("SOL"), 9);
 static constexpr symbol STT        = symbol(symbol_code("STT"), 8);   
 static constexpr symbol GAMO       = symbol(symbol_code("GAMO"), 8);   
 
+
+
 struct TokenSummary {
     std::vector<asset> tokens;
 };
 
-#define CONTRACT_VERSION "v1.0.0"
 
 class [[eosio::contract("tokensummary")]] tokensummary : public contract {
 public:
