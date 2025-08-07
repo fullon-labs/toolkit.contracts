@@ -33,12 +33,20 @@ static constexpr symbol GAMO       = symbol(symbol_code("GAMO"), 8);
 struct TokenSummary {
     std::vector<asset> tokens;
 };
+
+#define CONTRACT_VERSION "v1.0.0"
+
 class [[eosio::contract("tokensummary")]] tokensummary : public contract {
 public:
     using contract::contract;
 
     [[eosio::action]]
-    void view(const name& account);
+    TokenSummary view(const name& account);
+
+    [[eosio::action, eosio::read_only]] 
+    std::string version() {  
+        return CONTRACT_VERSION;                                 
+    } 
 
 private:
     asset get_balance(const name& bank, const symbol& symb, const name& account) ;
