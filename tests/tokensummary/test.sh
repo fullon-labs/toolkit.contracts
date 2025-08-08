@@ -25,7 +25,7 @@ mpush $con_ts view '["flonian"]' --read
 
 
 
-tx=$(tcli push action -djs ts.ps1 view '["flonian"]' --read --return-packed)
+tx=$(mcli push action -djs ts.ps1 view '["flonian"]' --read --return-packed)
 curl -X POST --url https://t.flonscan.io/v1/chain/send_read_only_transaction -d "{\"transaction\": $tx}" | jq .
 
 

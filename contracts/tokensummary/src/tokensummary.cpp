@@ -4,6 +4,7 @@
 #include <string>
 #include "tokensummary.hpp"
 #include "tokensummary.db.hpp"
+#include <cstdint>
 
 using std::string;
 using namespace eosio;
@@ -20,8 +21,23 @@ asset tokensummary::get_balance(const name& bank, const symbol& symb, const name
       return asset(0, symb);
 }
 
-TokenSummary tokensummary::view(const name& account) {
-    std::vector<asset> result;
+
+std::string tokensummary::format_amount(int64_t amount, uint8_t precision) {
+    bool neg = amount < 0;
+    if (neg) amount = -amount;
+    std::string s = std::to_string(amount);
+    if (precision > 0) {
+        if (s.size() <= precision) s.insert(0, precision - s.size() + 1, '0');
+        s.insert(s.size() - precision, ".");
+    }
+    if (neg) s.insert(s.begin(), '-');
+    return s;
+}
+
+Tokensummaryresult tokensummary::view(const name& account) {
+    std::vector<token_info> result;
+    result.reserve(16);
+
     std::vector<std::pair<name, symbol>> tokenlist = {
         { SYS_BANK,     FLON },
         { MIRROR_BANK,  USDT },
@@ -40,11 +56,16 @@ TokenSummary tokensummary::view(const name& account) {
     };
 
     for (const auto& item : tokenlist) {
+
         asset bal = get_balance(item.first, item.second, account);
-        if (bal.amount > 0) result.push_back(bal);
+        if (bal.amount <= 0) continue;
+
+        std::string bal_str = format_amount(bal.amount, bal.symbol.precision());
+
+        result.emplace_back(token_info{ item.first, bal_str, bal.symbol.code().to_string() });
     }
 
-    TokenSummary summary;
+    Tokensummaryresult summary;
     summary.tokens = std::move(result);
     return summary;
 }
