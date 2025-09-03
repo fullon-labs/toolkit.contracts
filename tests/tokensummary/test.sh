@@ -19,24 +19,24 @@ mcli set account permission $tokensummary_con active --add-code
 mpush $tokensummary_con view '["flonian"]' -p $tokensummary_con
 
 
-mpush $tokensummary_con view '["flonian"]' --read
+mpush $tokensummary_con view '["flonian"]' --read -j
 
 
 
-mpush $tokensummary_con addconfig '["flon.token","8,FLON"]' -p $tokensummary_con
-mpush $tokensummary_con addconfig '["flon.mtoken","6,USDT"]' -p $tokensummary_con
-mpush $tokensummary_con addconfig '["flon.mtoken","6,USDC"]' -p $tokensummary_con
-mpush $tokensummary_con addconfig '["flon.mtoken","8,ETH"]'  -p $tokensummary_con
-mpush $tokensummary_con addconfig '["flon.mtoken","8,BTC"]'  -p $tokensummary_con
-mpush $tokensummary_con addconfig '["flon.mtoken","8,BNB"]'  -p $tokensummary_con
-mpush $tokensummary_con addconfig '["flon.mtoken","6,TRX"]'  -p $tokensummary_con
-mpush $tokensummary_con addconfig '["flon.mtoken","8,BUSD"]' -p $tokensummary_con
-mpush $tokensummary_con addconfig '["flon.mtoken","6,DAI"]'  -p $tokensummary_con
-mpush $tokensummary_con addconfig '["flon.mtoken","8,DOGE"]' -p $tokensummary_con
-mpush $tokensummary_con addconfig '["flon.mtoken","8,SHIB"]' -p $tokensummary_con
-mpush $tokensummary_con addconfig '["flon.mtoken","8,SOL"]'  -p $tokensummary_con
-mpush $tokensummary_con addconfig '["flon.mtoken","8,STT"]'  -p $tokensummary_con
-mpush $tokensummary_con addconfig '["flon.mtoken","8,GAMO"]' -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.token","8,FLON"]' -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.mtoken","6,USDT"]' -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.mtoken","6,USDC"]' -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.mtoken","8,ETH"]'  -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.mtoken","8,BTC"]'  -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.mtoken","8,BNB"]'  -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.mtoken","6,TRX"]'  -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.mtoken","8,BUSD"]' -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.mtoken","6,DAI"]'  -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.mtoken","8,DOGE"]' -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.mtoken","8,SHIB"]' -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.mtoken","8,SOL"]'  -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.mtoken","8,STT"]'  -p $tokensummary_con
+mpush $tokensummary_con addtoken '["flon.mtoken","8,GAMO"]' -p $tokensummary_con
 
 
 
