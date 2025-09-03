@@ -91,7 +91,7 @@ void flonproxyswap::addtradpair(const name& tpcode,
                             const asset& mini_left,
                             const asset& mini_right,
                             const uint64_t& max_slippage) {
-    
+
     require_auth(_gstate.admin);
 
     pair_table pairs(get_self(), get_self().value);

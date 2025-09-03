@@ -11,18 +11,18 @@ using namespace eosio;
 using namespace flon;
 
 
-asset tokensummary::get_balance(const name& bank, const symbol& symb, const name& account) {
+asset token_summary::get_balance(const name& bank, const symbol& symb, const name& account) {
    tbl_accounts tmp(bank, account.value);
    auto itr = tmp.find(symb.code().raw());
 
    if (itr != tmp.end())
       return itr->balance;
-   else 
+   else
       return asset(0, symb);
 }
 
 
-std::string tokensummary::format_amount(int64_t amount, uint8_t precision) {
+std::string token_summary::format_amount(int64_t amount, uint8_t precision) {
     bool neg = amount < 0;
     if (neg) amount = -amount;
     std::string s = std::to_string(amount);
@@ -34,39 +34,47 @@ std::string tokensummary::format_amount(int64_t amount, uint8_t precision) {
     return s;
 }
 
-Tokensummaryresult tokensummary::view(const name& account) {
-    std::vector<token_info> result;
-    result.reserve(16);
+void token_summary::addconfig(const name& bank, const symbol& sym) {
+    require_auth(get_self());
 
-    std::vector<std::pair<name, symbol>> tokenlist = {
-        { SYS_BANK,     FLON },
-        { MIRROR_BANK,  USDT },
-        { MIRROR_BANK,  USDC },
-        { MIRROR_BANK,  ETH  },
-        { MIRROR_BANK,  BTC  },
-        { MIRROR_BANK,  BNB  },
-        { MIRROR_BANK,  TRX  },
-        { MIRROR_BANK,  BUSD },
-        { MIRROR_BANK,  DAI  },
-        { MIRROR_BANK,  DOGE },
-        { MIRROR_BANK,  SHIB },
-        { MIRROR_BANK,  SOL  },
-        { MIRROR_BANK,  STT  },
-        { MIRROR_BANK,  GAMO }
-    };
+    check(is_account(bank), "bank account not exist");
+    check(sym.is_valid(),   "invalid symbol");
 
-    for (const auto& item : tokenlist) {
+    token_cfg_t cfg(get_self(), get_self().value);
+    auto pk = make_tokencfg_pk(bank, sym);
+    auto it = cfg.find(pk);
+    check(it == cfg.end(), "token already in list");
 
-        asset bal = get_balance(item.first, item.second, account);
-        if (bal.amount <= 0) continue;
+    cfg.emplace(get_self(), [&](auto& r){
+        r.bank = bank;
+        r.sym  = sym;
+    });
+}
 
-        std::string bal_str = format_amount(bal.amount, bal.symbol.precision());
+void token_summary::delconfig(const name& bank, const symbol& sym) {
+    require_auth(get_self());
 
-        result.emplace_back(token_info{ item.first, bal_str, bal.symbol.code().to_string() });
+    token_cfg_t cfg(get_self(), get_self().value);
+    auto pk = make_tokencfg_pk(bank, sym);
+    auto it = cfg.find(pk);
+    check(it != cfg.end(), "token not found");
+    cfg.erase(it);
+}
+
+TokenSummary token_summary::view(const name& account) {
+    TokenSummary summary;
+
+    for (auto &row : token_cfg_t(get_self(), get_self().value)) {
+        auto bal = get_balance(row.bank, row.sym, account);
+        if (bal.amount > 0) {
+            summary.tokens.push_back({
+                row.bank,
+                format_amount(bal.amount, bal.symbol.precision()),
+                bal.symbol.code().to_string()
+            });
+        }
     }
 
-    Tokensummaryresult summary;
-    summary.tokens = std::move(result);
     return summary;
 }
 

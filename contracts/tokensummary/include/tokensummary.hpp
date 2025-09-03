@@ -28,23 +28,20 @@ static constexpr symbol BUSD       = symbol(symbol_code("BUSD"), 6);
 static constexpr symbol DAI        = symbol(symbol_code("DAI"), 18);
 static constexpr symbol DOGE       = symbol(symbol_code("DOGE"), 8);
 static constexpr symbol SHIB       = symbol(symbol_code("SHIB"), 18);
-static constexpr symbol SOL        = symbol(symbol_code("SOL"), 9);   
-static constexpr symbol STT        = symbol(symbol_code("STT"), 8);   
-static constexpr symbol GAMO       = symbol(symbol_code("GAMO"), 8);   
+static constexpr symbol SOL        = symbol(symbol_code("SOL"), 9);
+static constexpr symbol STT        = symbol(symbol_code("STT"), 8);
+static constexpr symbol GAMO       = symbol(symbol_code("GAMO"), 8);
 
 
-
-struct TokenSummary {
-    std::vector<asset> tokens;
-};
-
-
-class [[eosio::contract("tokensummary")]] tokensummary : public contract {
+class [[eosio::contract("tokensummary")]] token_summary : public contract {
 public:
     using contract::contract;
 
-    [[eosio::action, eosio::read_only]] 
-    Tokensummaryresult view(const name& account);
+    ACTION addconfig(const name& bank, const symbol& sym);
+    ACTION delconfig(const name& bank, const symbol& sym);
+
+    [[eosio::action, eosio::read_only]]
+    TokenSummary view(const name& account);
 
 private:
     asset get_balance(const name& bank, const symbol& symb, const name& account) ;

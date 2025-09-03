@@ -58,7 +58,7 @@ public:
                 const asset& mini_left,
                 const asset& mini_right,
                 const uint64_t& max_slippage);
-                
+
     [[eosio::action]]
     void rmtradpair(const name& tpcode);
 
@@ -87,7 +87,7 @@ public:
 
     [[eosio::action]]
     void setoracle(const name& new_oracle);
-    
+
     [[eosio::action]]
     void notifysettle(const order_t& order_item, const time_point& curr_ts);
 
