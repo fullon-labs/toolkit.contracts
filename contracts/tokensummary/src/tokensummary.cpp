@@ -12,12 +12,14 @@ using namespace flon;
 
 
 asset token_summary::get_balance(const name& bank, const symbol& symb, const name& account) {
-   tbl_accounts tmp(bank, account.value);
-   auto itr = tmp.find(symb.code().raw());
+    typedef eosio::multi_index< "accounts"_n, accounts > tbl_accounts;
 
-   if (itr != tmp.end())
+    tbl_accounts tmp(bank, account.value);
+    auto itr = tmp.find(symb.code().raw());
+
+    if (itr != tmp.end())
       return itr->balance;
-   else
+    else
       return asset(0, symb);
 }
 

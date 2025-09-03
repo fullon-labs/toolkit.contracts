@@ -28,8 +28,6 @@ TBL accounts {
     uint64_t primary_key() const { return balance.symbol.code().raw(); }
 };
 
-// 通用token资产表，不建议动，兼容多合约
-typedef eosio::multi_index< "accounts"_n, accounts > tbl_accounts;
 
 // ---------------- 可配置的统计代币清单 ----------------
 // 由合约维护的一张表，记录需要在 summary 中展示的 (bank, symbol) 组合
