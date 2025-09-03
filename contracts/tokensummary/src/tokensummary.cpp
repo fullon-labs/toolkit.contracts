@@ -64,7 +64,7 @@ TokenSummary token_summary::view(const name& account) {
     for (auto &row : token_cfg_t(get_self(), get_self().value)) {
         auto bal = asset(0, row.sym);
         _balance(row.bank, row.sym, account, bal);
-        
+
         if (bal.amount > 0) {
             summary.tokens.push_back({
                 row.bank,

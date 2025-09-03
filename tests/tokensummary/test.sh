@@ -41,8 +41,14 @@ mpush $tokensummary_con addtoken '["flon.mtoken","8,GAMO"]' -p $tokensummary_con
 
 
 
+<<<<<<< HEAD
 #  tx=$(mcli push action -djs ts.ps1 view '["flonian"]' --read --return-packed)
 #  curl -X POST --url https://t.flonscan.io/v1/chain/send_read_only_transaction -d "{\"transaction\": $tx}" | jq .
+=======
+
+tx=$(mcli push action -djs ts.ps1 view '["flonian"]' --read --return-packed)
+curl -X POST --url https://t.flonscan.io/v1/chain/send_read_only_transaction -d "{\"transaction\": $tx}" | jq .
+>>>>>>> 6785ce7 (modify tokensummary return type)
 
 
 #  curl -X POST https://t.flonscan.io/v1/chain/send_read_only_transaction \
