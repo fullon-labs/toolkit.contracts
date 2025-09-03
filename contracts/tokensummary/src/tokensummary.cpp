@@ -34,7 +34,7 @@ std::string token_summary::format_amount(int64_t amount, uint8_t precision) {
     return s;
 }
 
-void token_summary::addconfig(const name& bank, const symbol& sym) {
+void token_summary::addtoken(const name& bank, const symbol& sym) {
     require_auth(get_self());
 
     check(is_account(bank), "bank account not exist");
@@ -51,7 +51,7 @@ void token_summary::addconfig(const name& bank, const symbol& sym) {
     });
 }
 
-void token_summary::delconfig(const name& bank, const symbol& sym) {
+void token_summary::deltoken(const name& bank, const symbol& sym) {
     require_auth(get_self());
 
     token_cfg_t cfg(get_self(), get_self().value);

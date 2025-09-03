@@ -37,8 +37,8 @@ class [[eosio::contract("tokensummary")]] token_summary : public contract {
 public:
     using contract::contract;
 
-    ACTION addconfig(const name& bank, const symbol& sym);
-    ACTION delconfig(const name& bank, const symbol& sym);
+    ACTION addtoken(const name& bank, const symbol& sym);
+    ACTION deltoken(const name& bank, const symbol& sym);
 
     [[eosio::action, eosio::read_only]]
     TokenSummary view(const name& account);
