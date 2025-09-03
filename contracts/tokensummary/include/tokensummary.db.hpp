@@ -22,7 +22,7 @@ struct TokenSummary {
 };
 
 //scope: account
-TBL accounts {
+struct [[eosio::table, eosio::contract("flon.token")]] accounts {
     eosio::asset balance;
 
     uint64_t primary_key() const { return balance.symbol.code().raw(); }
