@@ -8,3 +8,19 @@ icon: @ICON_BASE_URL@/@TOKEN_ICON_URI@
 ---
 
 return balances of all top tokens for a given account
+
+<h1 class="contract">addtoken</h1>
+---
+spec_version: "0.2.0"
+title: Add a new Token into Summary list
+summary: 'Add token'
+icon: @ICON_BASE_URL@/@TOKEN_ICON_URI@
+---
+
+<h1 class="contract">deltoken</h1>
+---
+spec_version: "0.2.0"
+title: Delete a token from Summary list
+summary: 'Delete a token'
+icon: @ICON_BASE_URL@/@TOKEN_ICON_URI@
+---

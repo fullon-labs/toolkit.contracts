@@ -37,7 +37,7 @@ public:
     TokenSummary view(const name& account);
 
 private:
-    asset get_balance(const name& bank, const symbol& symb, const name& account) ;
+    void _balance(const name& bank, const symbol& symb, const name& account, asset& balance) ;
 
     std::string format_amount(int64_t amount, uint8_t precision) ;
 };
