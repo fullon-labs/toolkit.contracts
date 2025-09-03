@@ -12,8 +12,6 @@ using namespace flon;
 
 
 void token_summary::_balance(const name& bank, const symbol& symb, const name& account, asset& balance) {
-    typedef eosio::multi_index< "accounts"_n, accounts > tbl_accounts;
-
     tbl_accounts tmp(bank, account.value);
     auto itr = tmp.find(symb.code().raw());
 

@@ -27,6 +27,7 @@ struct [[eosio::table, eosio::contract("flon.token")]] accounts {
 
     uint64_t primary_key() const { return balance.symbol.code().raw(); }
 };
+typedef eosio::multi_index< "accounts"_n, accounts > tbl_accounts;
 
 
 // ---------------- 可配置的统计代币清单 ----------------
