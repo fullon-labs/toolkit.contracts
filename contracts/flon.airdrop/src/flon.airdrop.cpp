@@ -289,7 +289,7 @@ void airdrop::delitem(const uint64_t& plan_id, const uint64_t& item_id) {
     items.erase(it);
 }
 
-void airdrop::claimreward(const uint64_t&    plan_id,
+void airdrop::claimairdrop(const uint64_t&    plan_id,
                           const name&        claimer,
                           optional<uint64_t> prefer_item_id,
                           const std::string& memo)

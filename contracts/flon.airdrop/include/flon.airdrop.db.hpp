@@ -39,20 +39,21 @@ typedef eosio::singleton<"global"_n, global_t> global_singleton;
 /* -----------------------------
  * 计划 Plan（计划级“一人一次”）
  * ----------------------------- */
-NTBL("plans") plan_t {
-    uint64_t            plan_id;
-    time_point          started_at;               // 开始时间
-    time_point          ended_at;                 // 结束时间
+NTBL("plan") plan_t {
+    uint64_t            id;
+    time_point          plan_started_at;               // 开始时间
+    time_point          plan_ended_at;                 // 结束时间
 
-    vector<name>        auth_types;              // 本计划要求的认证类型集合
-    uint64_t            max_claims       = 0;     // 最大可领人数（0=不限）
-    uint64_t            claimed_cnt      = 0;     // 已领取人数
-    uint32_t            claim_item_limit = 0;     // 一次领取最多可领的条目数（0=不限；1=只允一个）
+    vector<name>        auth_types;                     // 本计划要求的认证类型集合
+    map<extended_aset, extended_aset> claim_config;     // { total_assets -> claim_per_user }
 
+    uint64_t            max_claims       = 0;           // 最大可领人数（0=不限）
+    uint64_t            claimed_cnt      = 0;           // 已领取人数
+    
     time_point          created_at;
     time_point          updated_at;
 
-    uint64_t primary_key() const { return plan_id; }
+    uint64_t primary_key() const { return id; }
 
     EOSLIB_SERIALIZE(plan_t,
         (plan_id)
@@ -66,39 +67,38 @@ typedef eosio::multi_index<"plans"_n, plan_t> plans_t;
 /* -----------------------------
  * 奖励条目 Reward Item（仅 FIXED）
  * ----------------------------- */
-// scope: plan_id
-NTBL("items") item_t {
-    uint64_t            item_id;
-    name                token_bank;
-    symbol              sym;
-    asset               quant;                   // 每人固定发放额
-    asset               deposited;                // 累计入金
-    asset               paid_total;               // 累计发放
-    uint64_t            item_max_claims = 0;
-    uint64_t            item_claimed_cnt = 0;
-    asset               per_user_cap;
-    time_point          created_at;
-    time_point          updated_at;
+// // scope: plan_id
+// NTBL("item") item_t {
+//     uint64_t            id;                     //PK
+//     name                token_bank;
+//     symbol              sym;
+//     asset               deposited;                // 累计入金
+//     asset               paid_total;               // 累计发放
+//     uint64_t            item_max_claims = 0;
+//     uint64_t            item_claimed_cnt = 0;
+//     asset               per_user_quant;           // 每人固定发放额
+//     time_point          created_at;
+//     time_point          updated_at;
 
-    uint64_t  primary_key() const { return item_id; }
-    uint64_t  bybank()      const { return token_bank.value; }
-    uint64_t  bysym()       const { return sym.code().raw(); }
-    uint128_t bybankprec() const {
-    return ( (uint128_t)token_bank.value << 64 )
-        | ( ((uint128_t)sym.code().raw() << 8) | sym.precision() );
-    }
-    EOSLIB_SERIALIZE( item_t,
-        (item_id)(token_bank)(sym)(quant)
-        (deposited)(paid_total)(item_max_claims)(item_claimed_cnt)
-        (per_user_cap)(created_at)(updated_at)
-    )
-};
-typedef eosio::multi_index<
-  "items"_n, item_t,
-  indexed_by<"bybank"_n,      const_mem_fun<item_t, uint64_t,  &item_t::bybank>>,
-  indexed_by<"bysym"_n,       const_mem_fun<item_t, uint64_t,  &item_t::bysym>>,
-  indexed_by<"bybankprec"_n,  const_mem_fun<item_t, uint128_t, &item_t::bybankprec>>
-> items_t;
+//     uint64_t  primary_key() const { return id; }
+//     uint64_t  bybank()      const { return token_bank.value; }
+//     uint64_t  bysym()       const { return sym.code().raw(); }
+//     uint128_t bybankprec() const {
+//     return ( (uint128_t)token_bank.value << 64 )
+//         | ( ((uint128_t)sym.code().raw() << 8) | sym.precision() );
+//     }
+//     EOSLIB_SERIALIZE( item_t,
+//         (item_id)(token_bank)(sym)(quant)
+//         (deposited)(paid_total)(item_max_claims)(item_claimed_cnt)
+//         (per_user_cap)(created_at)(updated_at)
+//     )
+// };
+// typedef eosio::multi_index<
+//   "items"_n, item_t,
+//   indexed_by<"bybank"_n,      const_mem_fun<item_t, uint64_t,  &item_t::bybank>>,
+//   indexed_by<"bysym"_n,       const_mem_fun<item_t, uint64_t,  &item_t::bysym>>,
+//   indexed_by<"bybankprec"_n,  const_mem_fun<item_t, uint128_t, &item_t::bybankprec>>
+// > items_t;
 
 /* -----------------------------
  * 领取记录 Claims（计划级“一人一次”）
@@ -107,7 +107,6 @@ typedef eosio::multi_index<
 NTBL("claims") claim_t {
     uint64_t            id;                     // 自增主键（plan 级）
     name                claimer;                // 领用人
-    uint32_t            claimed_items = 0;
     vector<asset>       rewards;
     uint64_t            claimed_at_us;
 
