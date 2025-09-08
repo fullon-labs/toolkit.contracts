@@ -1,5 +1,6 @@
 #include "flon.airdrop.hpp"
 #include "utils.hpp"
+#include "flon.token.hpp"
 
 namespace flon {
 
@@ -176,7 +177,6 @@ void airdrop::setplan(const uint64_t& plan_id,
 void airdrop::claimairdrop(const uint64_t& plan_id,
                            const name&     claimer,
                            const std::string& memo) {
-
   CHECKC(is_oracle(_gstate.oracles, claimer), err::DID_NOT_AUTH, "only oracle can claim");
   CHECKC(!memo.empty(), err::INVALID_FORMAT, "memo required");
 
@@ -203,24 +203,27 @@ void airdrop::claimairdrop(const uint64_t& plan_id,
       CHECKC(tot.quantity.symbol == per.quantity.symbol, err::SYMBOL_MISMATCH, "symbol mismatch in rule");
       CHECKC(per.quantity.amount > 0, err::NOT_POSITIVE, "per must be positive");
 
-      if (tot.quantity.amount < per.quantity.amount) continue;
+      if ( (tot.quantity.amount - per.quantity.amount) > 0 ) {
 
-      action(
-        permission_level{ get_self(), "active"_n },
-        tot.contract, "transfer"_n,
-        std::make_tuple(
-          get_self(),
-          beneficiary,
-          per.quantity,
-          std::string("airdrop:") + std::to_string(plan_id)
+        TRANSFER( tot.contract,beneficiary, per.quantity,
+          std::string("airdrop:") + std::to_string(plan_id) + ":" + claimer.to_string()
         )
-      ).send();
+        // action(
+        //   permission_level{ get_self(), "active"_n },
+        //   tot.contract, "transfer"_n,
+        //   std::make_tuple(
+        //     get_self(),
+        //     beneficiary,
+        //     per.quantity,
+        //     std::string("airdrop:") + std::to_string(plan_id) + ":" + claimer.to_string()
+        //   )
+        // ).send();
 
-      tot.quantity -= per.quantity;
-      ++paid_cnt;
+        tot.quantity -= per.quantity;
+        ++paid_cnt;
+      }
     }
 
-    // 若一个都没发出去，整单失败（不给空单）
     CHECKC(paid_cnt > 0, err::INSUFFICIENT_QUANTITY, "no token has sufficient balance");
 
     p.claimed_cnt += 1;
