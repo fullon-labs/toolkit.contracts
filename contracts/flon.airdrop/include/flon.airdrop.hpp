@@ -6,16 +6,18 @@
 #include <eosio/time.hpp>
 #include <string>
 #include <vector>
+#include <array>
 #include <optional>
 
 #include "flon.airdrop.db.hpp"
-#include "rwid.auth.db.hpp"
+#include "utils.hpp"
 
 namespace flon {
 
 using namespace eosio;
 using std::string;
 using std::vector;
+using std::array;
 using std::optional;
 
 #define CHECKC(exp, code, msg) \
@@ -48,7 +50,9 @@ enum class err: uint8_t {
    FEE_NOT_REQUIRED             = 24,
    DID_NOT_SUPPORTED            = 25,
    DID_PACK_SYMBOL_ERR          = 26,
-   STATUS_MISMATCH              = 27
+   STATUS_MISMATCH              = 27,
+   ALREADY_EXISTS               = 28,
+   EXCEED_LIMIT                 = 29
 };
 
 class [[eosio::contract("flon.airdrop")]] airdrop : public eosio::contract {
@@ -66,53 +70,42 @@ public:
 
   /* ===== 全局配置 ===== */
   ACTION init(const name& admin,
-              const name& rwid_contract,
-              const name& oracle_account);
+              const set<name>& oracles);
+
+    /* ===== 预言机管理 ===== */
+  ACTION addoracle(const name& oracle);
+  ACTION deloracle(const name& oracle);
 
   /* ===== 可领取币白名单 ===== */
   ACTION addtoken(const name& token_bank, const symbol& sym);
-  ACTION enabletoken(const name& token_bank, const symbol& sym, const bool& enabled);
   ACTION deltoken(const name& token_bank, const symbol& sym);
 
   /* ===== 计划管理 ===== */
-  ACTION newplan(time_point         started_at,
-                 time_point         ended_at,
-                 vector<name>       auth_types,
-                 const uint64_t&    max_claims   = 0,
-                 const uint32_t&    item_limit   = 0);
+  ACTION newplan(time_point started_at,
+                      time_point ended_at,
+                      const std::vector<token_rule_t>& claim_config_in);
 
-  ACTION setplan(const uint64_t&            plan_id,
-                 optional<time_point>       started_at,
-                 optional<time_point>       ended_at,
-                 optional<vector<name>>     auth_types,
-                 optional<uint64_t>         max_claims,
-                 optional<uint32_t>         item_limit);
+  ACTION setplan(const uint64_t& plan_id,
+                      std::optional<time_point> started_at,
+                      std::optional<time_point> ended_at,
+                      std::optional<std::vector<token_rule_t>> claim_config_in
+                      );
 
-  /* ===== 计划条目（scope: plan_id） ===== */
-  ACTION additem(const uint64_t&      plan_id,
-                 const name&          token_bank,
-                 const symbol&        sym,
-                 const asset&         quant,
-                 optional<asset>      per_user_cap,
-                 const uint64_t&      item_max_claims = 0);
+  /* ===== oracle 代领 ===== */
+  // memo 形如: "user:<account>"
+  ACTION claimairdrop(const uint64_t& plan_id,
+                      const name&     claimer,
+                      const string&   memo);
 
-  ACTION setitem(const uint64_t&      plan_id,
-                 const uint64_t&      item_id,
-                 optional<asset>      quant,
-                 optional<asset>      per_user_cap,
-                 optional<uint64_t>   item_max_claims);
-
-  ACTION delitem(const uint64_t& plan_id, const uint64_t& item_id);
-
-  /* ===== 用户领取 ===== */
-  ACTION claimreward(const uint64_t&      plan_id,
-                     const name&          claimer,
-                     optional<uint64_t>   prefer_item_id,
-                    const string& memo);
-
-  /* ===== 入金路由 ===== */
+  /* ===== 入金路由（仅接收 tokens 白名单中的币） ===== */
+  // memo: "add:<plan_id>"
   [[eosio::on_notify("*::transfer")]]
   void ontransfer(name from, name to, asset quantity, std::string memo);
+
+
+  inline uint128_t bankcode_key(const name& bank, const symbol& sym) {
+      return ((uint128_t)bank.value << 64) | (uint128_t)sym.code().raw();
+  }
 
 private:
   global_singleton _global;
