@@ -264,9 +264,9 @@ void airdrop::ontransfer(name from, name to, asset quantity, std::string memo) {
   // 白名单币
   assert_token_allowed(get_self(), token_bank, quantity.symbol);
 
-  // memo: "add:<plan_id>"
+  // memo: "plan:<plan_id>"
   auto parts = split(memo, ":");
-  CHECKC(parts.size() == 2 && parts[0] == "add", err::INVALID_FORMAT, "memo must be 'add:<plan_id>'");
+  CHECKC(parts.size() == 2 && parts[0] == "plan", err::INVALID_FORMAT, "memo must be 'plan:<plan_id>'");
   const uint64_t plan_id = to_uint64(parts[1], "plan_id");
 
   plans_t plans(get_self(), get_self().value);
