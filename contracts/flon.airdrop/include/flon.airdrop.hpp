@@ -81,14 +81,15 @@ public:
   ACTION deltoken(const name& token_bank, const symbol& sym);
 
   /* ===== 计划管理 ===== */
-  ACTION newplan(time_point started_at,
+  ACTION addplan(time_point started_at,
                       time_point ended_at,
-                      const std::vector<token_rule_t>& claim_config_in);
+                      const std::vector<token_rule_t>& claim_config,
+                      const string& title);
 
   ACTION setplan(const uint64_t& plan_id,
                       std::optional<time_point> started_at,
                       std::optional<time_point> ended_at,
-                      std::optional<std::vector<token_rule_t>> claim_config_in
+                      std::optional<std::vector<token_rule_t>> claim_config
                       );
 
   /* ===== oracle 代领 ===== */

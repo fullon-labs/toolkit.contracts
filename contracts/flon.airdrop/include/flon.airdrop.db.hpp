@@ -50,6 +50,7 @@ NTBL("plans") plan_t {
     time_point   plan_ended_at;                   // 结束时间
     std::vector<token_rule_t> claim_config; // 每币配置：[总额度, 单人额度]
     uint64_t     claimed_cnt = 0;                 // 已领取人数
+    string       title;
     time_point   created_at;
     time_point   updated_at;
 
@@ -57,7 +58,7 @@ NTBL("plans") plan_t {
 
     EOSLIB_SERIALIZE(plan_t,
         (id)(plan_started_at)(plan_ended_at)(claim_config)
-        (claimed_cnt)(created_at)(updated_at)
+        (claimed_cnt)(title)(created_at)(updated_at)
     )
 };
 typedef eosio::multi_index<"plans"_n, plan_t> plans_t;

@@ -100,21 +100,23 @@ void airdrop::deltoken(const name& token_bank, const symbol& sym) {
 }
 
 // ---------- 新建计划 ----------
-void airdrop::newplan(time_point started_at,
+void airdrop::addplan(time_point started_at,
                       time_point ended_at,
-                      const std::vector<token_rule_t>& claim_config_in) {
+                      const std::vector<token_rule_t>& claim_config,
+                      const string& title
+                    ) {
   check(
         has_auth(_gstate.admin) || has_auth(get_self()),
         "[[16]] requires admin or self auth"
     );
   CHECKC(started_at <= ended_at, err::VAILD_TIME_INVALID, "time window invalid");
-  CHECKC(!claim_config_in.empty(), err::INVALID_FORMAT, "claim_config empty");
+  CHECKC(!claim_config.empty(), err::INVALID_FORMAT, "claim_config empty");
 
   // 校验 + 规范化（total.amount 强制 0；白名单校验）
   std::vector<token_rule_t> cfg;
-  cfg.reserve(claim_config_in.size());
+  cfg.reserve(claim_config.size());
 
-  for (const auto& rule : claim_config_in) {
+  for (const auto& rule : claim_config) {
     const auto& total_in = rule.total;
     const auto& per_in   = rule.per;
 
@@ -139,6 +141,7 @@ void airdrop::newplan(time_point started_at,
     p.plan_ended_at    = ended_at;
     p.claim_config     = cfg;
     p.claimed_cnt      = 0;
+    p.title            = title;
     p.created_at       = now();
     p.updated_at       = p.created_at;
   });
@@ -149,7 +152,7 @@ void airdrop::newplan(time_point started_at,
 void airdrop::setplan(const uint64_t& plan_id,
                       std::optional<time_point> started_at,
                       std::optional<time_point> ended_at,
-                      std::optional<std::vector<token_rule_t>> claim_config_in) {
+                      std::optional<std::vector<token_rule_t>> claim_config) {
   check(
         has_auth(_gstate.admin) || has_auth(get_self()),
         "[[16]] requires admin or self auth"
@@ -163,8 +166,8 @@ void airdrop::setplan(const uint64_t& plan_id,
     if (ended_at)   p.plan_ended_at   = *ended_at;
     CHECKC(p.plan_started_at <= p.plan_ended_at, err::VAILD_TIME_INVALID, "time window invalid");
 
-    if (claim_config_in) {
-      const auto& nc = *claim_config_in;
+    if (claim_config) {
+      const auto& nc = *claim_config;
       CHECKC(nc.size() == p.claim_config.size(), err::INVALID_FORMAT, "claim_config size mismatch");
 
       for (size_t i = 0; i < nc.size(); ++i) {
