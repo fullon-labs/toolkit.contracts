@@ -57,6 +57,7 @@ add_subdirectory(price.oracle)
 add_subdirectory(flon.creator)
 add_subdirectory(tokensummary)
 add_subdirectory(flon.airdrop)
+add_subdirectory(flon.split)
 
 if(BUILD_TESTS)
   add_subdirectory(test_contracts)

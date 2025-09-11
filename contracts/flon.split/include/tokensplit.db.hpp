@@ -76,21 +76,19 @@ namespace plan_status {
 };
 
 NTBL("global") global_t {
-    eosio::name admin = "flonianadmin"_n;
-    uint64_t    last_plan_id; 
+    eosio::name             admin = "flonian"_n;
+    uint64_t                last_plan_id; 
 
-    EOSLIB_SERIALIZE( global_t, (admin)(last_plan_id) )
-};
-typedef eosio::singleton< "global"_n, global_t > global_singleton;
-
-NTBL("global2") global2_t {
-    name                    fee_receiver = "flonianadmin"_n;
+    name                    fee_receiver = "flonian"_n;
     asset                   fee = asset(100000000,SYS_SYMB);
     bool                    running = true;
     uint64_t                min_split_count = 2;
     uint64_t                max_split_count = 10;
+
+    EOSLIB_SERIALIZE( global_t, (admin)(last_plan_id)(fee_receiver)(fee)(running)(min_split_count)(max_split_count) )
 };
-typedef eosio::singleton< "global2"_n, global2_t > global2_singleton;
+typedef eosio::singleton< "global"_n, global_t > global_singleton;
+
 
 struct split_unit_s {
     eosio::name token_receiver;

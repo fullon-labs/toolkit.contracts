@@ -12,8 +12,6 @@ class [[eosio::contract("flon.split")]] tokensplit: public eosio::contract {
 private:
     global_singleton    _global;
     global_t            _gstate;
-    global2_singleton    _global2;
-    global2_t            _gstate2;
     dbc                 _db;
 
 public:
@@ -22,16 +20,13 @@ public:
     tokensplit(eosio::name receiver, eosio::name code, datastream<const char*> ds):
         contract(receiver, code, ds),
         _global(get_self(), get_self().value),
-        _global2(get_self(), get_self().value),
         _db(_self)
     {
         _gstate = _global.exists() ? _global.get() : global_t{};
-        _gstate2 = _global2.exists() ? _global2.get() : global2_t{};
     }
 
     ~tokensplit() { 
         _global.set( _gstate, get_self() ); 
-        _global2.set( _gstate2, get_self() ); 
     }
 
 public:
@@ -58,7 +53,7 @@ public:
     using claimall_action = eosio::action_wrapper<"claimall"_n, &tokensplit::claimall>; 
 
 private:
-    void _recharge( const name& owner, const asset& quantity);
+    void _recharge_fee( const name& owner, const asset& quantity);
     void _split( const name& from, const uint64_t& plan_id, const asset& quantity,const uint64_t& boost);
     void _add_wallet( const name& owner, const uint64_t& plan_id, const name& contract, const asset& quantity);
     bool _empty_wallets(const uint64_t& plan_id);
