@@ -80,7 +80,7 @@ NTBL("global") global_t {
     uint64_t                last_plan_id; 
 
     name                    fee_receiver = "flonian"_n;
-    asset                   fee = asset(100000000,SYS_SYMB);
+    asset                   fee = asset(100000000, SYS_SYMB);
     bool                    running = true;
     uint64_t                min_split_count = 2;
     uint64_t                max_split_count = 10;
