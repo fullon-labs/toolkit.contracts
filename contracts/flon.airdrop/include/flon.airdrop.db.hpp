@@ -36,12 +36,21 @@ typedef eosio::singleton<"global"_n, global_t> global_singleton;
  * 计划 Plan（计划级“一人一次”）
  * - claim_config: 每个元素为 [total_quota, per_user]（均为 extended_asset）
  * ----------------------------- */
+
+
+struct token_conf_s {
+    extended_asset per;        // 每用户可领
+    extended_asset available;  // 剩余额度
+
+    EOSLIB_SERIALIZE(token_conf_s, (per)(available))
+};
+
 NTBL("plans") plan_t {
     uint64_t     id;
     string       title;
     time_point   plan_started_at;                 // 开始时间
     time_point   plan_ended_at;                   // 结束时间
-    map<extended_asset, extended_asset> claims;   // 单次领取额度（固定）-> 可用额度（余额池）
+    std::vector<token_conf_s> claims;             // 单次领取额度（固定）-> 可用额度（余额池）
     uint64_t     claimed_cnt = 0;                 // 已领取人/次数
     time_point   created_at;
     time_point   updated_at;

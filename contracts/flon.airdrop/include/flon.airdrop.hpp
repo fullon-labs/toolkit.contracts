@@ -84,7 +84,7 @@ public:
   ACTION addplan(const string& title,
                       const time_point& started_at,
                       const time_point& ended_at,
-                      const extended_asset& single_claim
+                      const vector<extended_asset>& single_claim
                       );
 
   ACTION setplan(const uint64_t& plan_id,

@@ -100,59 +100,61 @@ void airdrop::deltoken(const name& token_bank, const symbol& sym) {
 }
 
 // ---------- 新建计划 ----------
-void airdrop::addplan(const string& title,
-                      const time_point& started_at,
-                      const time_point& ended_at,
-                      extended_asset& single_claim
-                    ) {
-  check(
-        has_auth(_gstate.admin) || has_auth(get_self()),
-        "[[16]] requires admin or self auth"
-    );
-  CHECKC(started_at <= ended_at, err::VAILD_TIME_INVALID, "time window invalid");
-  CHECKC(!claim_config.empty(), err::INVALID_FORMAT, "claim_config empty");
+void airdrop::addplan(const string&             title,
+                      const time_point&         started_at,
+                      const time_point&         ended_at,
+                      const vector<extended_asset>& single_claims   // 多个 per
+)
+{
+    // 允许 admin 或合约自身操作
+    check(has_auth(_gstate.admin) || has_auth(get_self()),
+          "[[16]] requires admin or self auth");
 
-  // 校验 + 规范化（total.amount 强制 0；白名单校验）
-  std::vector<token_conf_s> cfg;
-  cfg.reserve(claim_config.size());
+    // 基本时间校验
+    CHECKC(started_at <= ended_at, err::VAILD_TIME_INVALID, "time window invalid");
+    CHECKC(!single_claims.empty(), err::INVALID_FORMAT, "single_claim set is empty");
 
-  for (const auto& rule : claim_config) {
-    const auto& total_in = rule.total;
-    const auto& per_in   = rule.per;
+    std::vector<token_conf_s> cfg;
+    cfg.reserve(single_claims.size());
 
-    CHECKC(total_in.contract == per_in.contract, err::ACCOUNT_INVALID, "contract mismatch in rule");
-    CHECKC(total_in.quantity.symbol == per_in.quantity.symbol, err::SYMBOL_MISMATCH, "symbol mismatch in rule");
-    CHECKC(per_in.quantity.amount > 0, err::NOT_POSITIVE, "per_user must be positive");
+    for (const auto& per_in : single_claims) {
+        // 基本校验
+        CHECKC(is_account(per_in.contract), err::ACCOUNT_INVALID, "token contract not exist: " + per_in.contract.to_string());
+        CHECKC(per_in.quantity.is_valid(),  err::INVALID_FORMAT,  "invalid asset");
+        CHECKC(per_in.quantity.amount > 0,  err::NOT_POSITIVE,    "per_user must be positive");
 
-    assert_token_allowed(get_self(), per_in.contract, per_in.quantity.symbol);
+        // 白名单/允许币种校验
+        assert_token_allowed(get_self(), per_in.contract, per_in.quantity.symbol);
 
-    token_conf_s norm;
-    norm.total = extended_asset{ asset{0, per_in.quantity.symbol}, per_in.contract };
-    norm.per   = per_in;
-    cfg.push_back(norm);
-  }
+        // 规范化：强制 available=0
+        token_conf_s norm;
+        norm.per   = per_in;
+        norm.available = extended_asset{ asset{0, per_in.quantity.symbol}, per_in.contract };
 
-  plans_t plans(get_self(), get_self().value);
-  _gstate.last_plan_id += 1;
+        cfg.emplace_back(norm);
+    }
 
-  plans.emplace(get_self(), [&](auto& p){
-    p.id               = _gstate.last_plan_id;
-    p.title            = title;
-    p.plan_started_at  = started_at;
-    p.plan_ended_at    = ended_at;
-    p.claim_config     = cfg;
-    p.created_at       = now();
-    p.updated_at       = p.created_at;
-  });
+    // 写入计划
+    plans_t plans(get_self(), get_self().value);
+    _gstate.last_plan_id += 1;
 
+    const auto nowtp = current_time_point();
+    plans.emplace(get_self(), [&](auto& p){
+        p.id               = _gstate.last_plan_id;
+        p.title            = title;
+        p.plan_started_at  = started_at;
+        p.plan_ended_at    = ended_at;
+        p.claims           = cfg;
+        p.created_at       = nowtp;
+        p.updated_at       = nowtp;
+    });
 }
 
 // ---------- 修改计划 ----------
 void airdrop::setplan(const uint64_t& plan_id,
                       std::optional<string> title,
                       std::optional<time_point> started_at,
-                      std::optional<time_point> ended_at,
-                      std::optional<map<extended_asset, extended_asset>> claim_config) {
+                      std::optional<time_point> ended_at) {
   check(
         has_auth(_gstate.admin) || has_auth(get_self()),
         "[[16]] requires admin or self auth"
@@ -162,91 +164,67 @@ void airdrop::setplan(const uint64_t& plan_id,
   auto it = get_plan(plans, plan_id);
 
   plans.modify(it, same_payer, [&](auto& p){
-    if (title) p.title = *title;
+    if (title)     p.title           = *title;
     if (started_at) p.plan_started_at = *started_at;
     if (ended_at)   p.plan_ended_at   = *ended_at;
-    CHECKC(p.plan_started_at <= p.plan_ended_at, err::VAILD_TIME_INVALID, "time window invalid");
 
-    if (claim_config) {
-      const auto& nc = *claim_config;
-      CHECKC(nc.size() == p.claim_config.size(), err::INVALID_FORMAT, "claim_config size mismatch");
-
-      for (size_t i = 0; i < nc.size(); ++i) {
-        const auto& oldT = p.claim_config[i].total;
-        const auto& oldP = p.claim_config[i].per;
-        const auto& newT = nc[i].total;
-        const auto& newP = nc[i].per;
-
-        // total 完全不可变
-        CHECKC(newT.contract == oldT.contract, err::ACCOUNT_INVALID, "total.contract changed");
-        CHECKC(newT.quantity.symbol == oldT.quantity.symbol, err::SYMBOL_MISMATCH, "total.symbol changed");
-        CHECKC(newT.quantity.amount == oldT.quantity.amount, err::INVALID_FORMAT, "total.amount changed");
-
-        // per 只能改数量 & 必须与 total 对齐
-        CHECKC(newP.contract == oldT.contract, err::ACCOUNT_INVALID, "per.contract mismatch with total");
-        CHECKC(newP.quantity.symbol == oldT.quantity.symbol, err::SYMBOL_MISMATCH, "per.symbol mismatch with total");
-        CHECKC(newP.quantity.amount > 0, err::NOT_POSITIVE, "per_user must be positive");
-
-        p.claim_config[i].per = newP;
-      }
-    }
+    CHECKC(p.plan_started_at <= p.plan_ended_at,
+           err::VAILD_TIME_INVALID, "time window invalid");
 
     p.updated_at = now();
   });
 }
 
-// ---------- 领取（仅 oracle） ----------
 void airdrop::claimairdrop(const uint64_t& plan_id,
                            const name&     claimer,
                            const std::string& memo) {
-  CHECKC(is_oracle(_gstate.oracles, claimer), err::DID_NOT_AUTH, "only oracle can claim");
+  // 必须由 oracle 签名发起
+  require_auth(claimer);
+  CHECKC(is_oracle(_gstate.oracles, claimer), err::DID_NOT_AUTH,
+         "only oracle can claim");
   CHECKC(!memo.empty(), err::INVALID_FORMAT, "memo required");
 
   // memo: "user:<account>"
   auto parts = split(memo, ":");
-  CHECKC(parts.size() == 2 && parts[0] == "user", err::INVALID_FORMAT, "memo must be 'user:<account>'");
+  CHECKC(parts.size() == 2 && parts[0] == "user", err::INVALID_FORMAT,
+         "memo must be 'user:<account>'");
   const name beneficiary(parts[1]);
-  CHECKC(beneficiary.value && is_account(beneficiary), err::ACCOUNT_INVALID, "invalid beneficiary");
+  CHECKC(beneficiary.value && is_account(beneficiary), err::ACCOUNT_INVALID,
+         "invalid beneficiary");
 
   plans_t plans(get_self(), get_self().value);
   auto it = get_plan(plans, plan_id);
 
   const auto t = now();
-  CHECKC(t >= it->plan_started_at && t <= it->plan_ended_at, err::EXPIRED, "plan not in active window");
+  CHECKC(t >= it->plan_started_at && t <= it->plan_ended_at, err::EXPIRED,
+         "plan not in active window");
 
   plans.modify(it, same_payer, [&](auto& p){
     uint32_t paid_cnt = 0;
 
-    for (auto& rule : p.claim_config) {
+    for (auto& rule : p.claims) {
       const auto& per = rule.per;
-      auto&       tot = rule.total;
+      auto&       tot = rule.available;
 
-      CHECKC(tot.contract == per.contract, err::ACCOUNT_INVALID, "contract mismatch in rule");
-      CHECKC(tot.quantity.symbol == per.quantity.symbol, err::SYMBOL_MISMATCH, "symbol mismatch in rule");
+      CHECKC(tot.contract == per.contract, err::ACCOUNT_INVALID,
+             "contract mismatch in rule");
+      CHECKC(tot.quantity.symbol == per.quantity.symbol, err::SYMBOL_MISMATCH,
+             "symbol mismatch in rule");
       CHECKC(per.quantity.amount > 0, err::NOT_POSITIVE, "per must be positive");
 
-      if ( (tot.quantity.amount - per.quantity.amount) > 0 ) {
-
-        TRANSFER( tot.contract,beneficiary, per.quantity,
-          std::string("airdrop:") + std::to_string(plan_id) + ":" + claimer.to_string()
-        )
-        // action(
-        //   permission_level{ get_self(), "active"_n },
-        //   tot.contract, "transfer"_n,
-        //   std::make_tuple(
-        //     get_self(),
-        //     beneficiary,
-        //     per.quantity,
-        //     std::string("airdrop:") + std::to_string(plan_id) + ":" + claimer.to_string()
-        //   )
-        // ).send();
-
+      // 足额才能发放（允许刚好等于）
+      if ( (tot.quantity.amount - per.quantity.amount) >= 0 ) {
+        TRANSFER(tot.contract,
+                 beneficiary,
+                 per.quantity,
+                 std::string("airdrop:") + std::to_string(plan_id) + ":" + claimer.to_string());
         tot.quantity -= per.quantity;
         ++paid_cnt;
       }
     }
 
-    CHECKC(paid_cnt > 0, err::INSUFFICIENT_QUANTITY, "no token has sufficient balance");
+    CHECKC(paid_cnt > 0, err::INSUFFICIENT_QUANTITY,
+           "no token rule has sufficient balance in plan");
 
     p.claimed_cnt += 1;
     p.updated_at   = now();
@@ -274,9 +252,9 @@ void airdrop::ontransfer(name from, name to, asset quantity, std::string memo) {
 
   plans.modify(it, same_payer, [&](auto& p){
     bool matched = false;
-    for (auto& r : p.claim_config) {
-      if (r.total.contract == token_bank && r.total.quantity.symbol == quantity.symbol) {
-        r.total.quantity += quantity;
+    for (auto& r : p.claims) {
+      if (r.available.contract == token_bank && r.available.quantity.symbol == quantity.symbol) {
+        r.available.quantity += quantity;
         matched = true;
       }
     }
