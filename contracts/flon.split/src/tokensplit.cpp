@@ -108,7 +108,7 @@ void tokensplit::addplan(const name& owner, const string& title, const vector<sp
     if ( owner != _gstate.admin){
         account_t::tbl_t accounts( _self, _self.value);
         auto account_itr = accounts.find(owner.value);
-        CHECKC( account_itr != accounts.end() , err::PARAM_ERROR,"account not found!")
+        CHECKC( account_itr != accounts.end() , err::PARAM_ERROR,"account not found!: " + owner.to_string() )
         CHECKC( account_itr -> balance >= _gstate.fee, err::PARAM_ERROR,"Unpaid")
 
         accounts.modify(account_itr, same_payer,[&]( auto& row){
