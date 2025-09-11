@@ -103,7 +103,7 @@ void airdrop::deltoken(const name& token_bank, const symbol& sym) {
 void airdrop::addplan(const string& title,
                       const time_point& started_at,
                       const time_point& ended_at,
-                      const std::vector<token_rule_t>& claim_config
+                      extended_asset& single_claim
                     ) {
   check(
         has_auth(_gstate.admin) || has_auth(get_self()),
@@ -113,7 +113,7 @@ void airdrop::addplan(const string& title,
   CHECKC(!claim_config.empty(), err::INVALID_FORMAT, "claim_config empty");
 
   // 校验 + 规范化（total.amount 强制 0；白名单校验）
-  std::vector<token_rule_t> cfg;
+  std::vector<token_conf_s> cfg;
   cfg.reserve(claim_config.size());
 
   for (const auto& rule : claim_config) {
@@ -126,7 +126,7 @@ void airdrop::addplan(const string& title,
 
     assert_token_allowed(get_self(), per_in.contract, per_in.quantity.symbol);
 
-    token_rule_t norm;
+    token_conf_s norm;
     norm.total = extended_asset{ asset{0, per_in.quantity.symbol}, per_in.contract };
     norm.per   = per_in;
     cfg.push_back(norm);
@@ -152,7 +152,7 @@ void airdrop::setplan(const uint64_t& plan_id,
                       std::optional<string> title,
                       std::optional<time_point> started_at,
                       std::optional<time_point> ended_at,
-                      std::optional<std::vector<token_rule_t>> claim_config) {
+                      std::optional<map<extended_asset, extended_asset>> claim_config) {
   check(
         has_auth(_gstate.admin) || has_auth(get_self()),
         "[[16]] requires admin or self auth"

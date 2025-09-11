@@ -84,14 +84,13 @@ public:
   ACTION addplan(const string& title,
                       const time_point& started_at,
                       const time_point& ended_at,
-                      const std::vector<token_rule_t>& claim_config
+                      const extended_asset& single_claim
                       );
 
   ACTION setplan(const uint64_t& plan_id,
                       std::optional<string> title,
                       std::optional<time_point> started_at,
-                      std::optional<time_point> ended_at,
-                      std::optional<std::vector<token_rule_t>> claim_config
+                      std::optional<time_point> ended_at
                       );
 
   /* ===== oracle 代领 ===== */
