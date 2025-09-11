@@ -42,7 +42,10 @@ void airdrop::init(const name& admin, const std::set<name>& oracles) {
 }
 
 void airdrop::addoracle(const name& oracle) {
-  require_auth(_gstate.admin);
+  check(
+        has_auth(_gstate.admin) || has_auth(get_self()),
+        "[[16]] requires admin or self auth"
+    );
   CHECKC(oracle.value && is_account(oracle), err::ACCOUNT_INVALID, "invalid oracle");
   CHECKC(!is_oracle(_gstate.oracles, oracle), err::ALREADY_EXISTS, "oracle already exists");
   _gstate.oracles.insert(oracle);
@@ -50,7 +53,10 @@ void airdrop::addoracle(const name& oracle) {
 }
 
 void airdrop::deloracle(const name& oracle) {
-  require_auth(_gstate.admin);
+  check(
+        has_auth(_gstate.admin) || has_auth(get_self()),
+        "[[16]] requires admin or self auth"
+    );
   auto it = _gstate.oracles.find(oracle);
   CHECKC(it != _gstate.oracles.end(), err::RECORD_NO_FOUND, "oracle not found");
   _gstate.oracles.erase(it);
@@ -59,7 +65,10 @@ void airdrop::deloracle(const name& oracle) {
 
 // ---------- 可用币白名单 ----------
 void airdrop::addtoken(const name& token_bank, const symbol& sym) {
-  require_auth(_gstate.admin);
+  check(
+        has_auth(_gstate.admin) || has_auth(get_self()),
+        "[[16]] requires admin or self auth"
+    );
   CHECKC(token_bank.value && is_account(token_bank), err::ACCOUNT_INVALID, "invalid token_bank");
   CHECKC(sym.is_valid(), err::INVALID_FORMAT, "invalid symbol");
 
@@ -79,7 +88,10 @@ void airdrop::addtoken(const name& token_bank, const symbol& sym) {
 }
 
 void airdrop::deltoken(const name& token_bank, const symbol& sym) {
-  require_auth(_gstate.admin);
+  check(
+        has_auth(_gstate.admin) || has_auth(get_self()),
+        "[[16]] requires admin or self auth"
+    );
   tokens_t tokens(get_self(), get_self().value);
   auto by = tokens.get_index<"bybankcode"_n>();
   auto it = by.find(bankcode_key(token_bank, sym));
@@ -91,7 +103,10 @@ void airdrop::deltoken(const name& token_bank, const symbol& sym) {
 void airdrop::newplan(time_point started_at,
                       time_point ended_at,
                       const std::vector<token_rule_t>& claim_config_in) {
-  require_auth(_gstate.admin);
+  check(
+        has_auth(_gstate.admin) || has_auth(get_self()),
+        "[[16]] requires admin or self auth"
+    );
   CHECKC(started_at <= ended_at, err::VAILD_TIME_INVALID, "time window invalid");
   CHECKC(!claim_config_in.empty(), err::INVALID_FORMAT, "claim_config empty");
 
@@ -135,7 +150,10 @@ void airdrop::setplan(const uint64_t& plan_id,
                       std::optional<time_point> started_at,
                       std::optional<time_point> ended_at,
                       std::optional<std::vector<token_rule_t>> claim_config_in) {
-  require_auth(_gstate.admin);
+  check(
+        has_auth(_gstate.admin) || has_auth(get_self()),
+        "[[16]] requires admin or self auth"
+    );
 
   plans_t plans(get_self(), get_self().value);
   auto it = get_plan(plans, plan_id);
