@@ -103,7 +103,7 @@ void airdrop::deltoken(const name& token_bank, const symbol& sym) {
 void airdrop::addplan(const string&             title,
                       const time_point&         started_at,
                       const time_point&         ended_at,
-                      const vector<extended_asset>& single_claims   // 多个 per
+                      const vector<extended_asset>& single_claims   // 多个 single_claim
 )
 {
     // 允许 admin 或合约自身操作
@@ -117,19 +117,19 @@ void airdrop::addplan(const string&             title,
     std::vector<token_conf_s> cfg;
     cfg.reserve(single_claims.size());
 
-    for (const auto& per_in : single_claims) {
+    for (const auto& single_claim : single_claims) {
         // 基本校验
-        CHECKC(is_account(per_in.contract), err::ACCOUNT_INVALID, "token contract not exist: " + per_in.contract.to_string());
-        CHECKC(per_in.quantity.is_valid(),  err::INVALID_FORMAT,  "invalid asset");
-        CHECKC(per_in.quantity.amount > 0,  err::NOT_POSITIVE,    "per_user must be positive");
+        CHECKC(is_account(single_claim.contract), err::ACCOUNT_INVALID, "token contract not exist: " + single_claim.contract.to_string());
+        CHECKC(single_claim.quantity.is_valid(),  err::INVALID_FORMAT,  "invalid asset");
+        CHECKC(single_claim.quantity.amount > 0,  err::NOT_POSITIVE,    "single_claim must be positive");
 
         // 白名单/允许币种校验
-        assert_token_allowed(get_self(), per_in.contract, per_in.quantity.symbol);
+        assert_token_allowed(get_self(), single_claim.contract, single_claim.quantity.symbol);
 
         // 规范化：强制 available=0
         token_conf_s norm;
-        norm.per   = per_in;
-        norm.available = extended_asset{ asset{0, per_in.quantity.symbol}, per_in.contract };
+        norm.single_claim   = single_claim;
+        norm.available = extended_asset{ asset{0, single_claim.quantity.symbol}, single_claim.contract };
 
         cfg.emplace_back(norm);
     }
@@ -203,22 +203,22 @@ void airdrop::claimairdrop(const uint64_t& plan_id,
     uint32_t paid_cnt = 0;
 
     for (auto& rule : p.claims) {
-      const auto& per = rule.per;
-      auto&       tot = rule.available;
+      const auto& single_claim = rule.single_claim;
+      auto&       available_claim = rule.available;
 
-      CHECKC(tot.contract == per.contract, err::ACCOUNT_INVALID,
+      CHECKC(available_claim.contract == single_claim.contract, err::ACCOUNT_INVALID,
              "contract mismatch in rule");
-      CHECKC(tot.quantity.symbol == per.quantity.symbol, err::SYMBOL_MISMATCH,
+      CHECKC(available_claim.quantity.symbol == single_claim.quantity.symbol, err::SYMBOL_MISMATCH,
              "symbol mismatch in rule");
-      CHECKC(per.quantity.amount > 0, err::NOT_POSITIVE, "per must be positive");
+      CHECKC(single_claim.quantity.amount > 0, err::NOT_POSITIVE, "single_claim must be positive");
 
       // 足额才能发放（允许刚好等于）
-      if ( (tot.quantity.amount - per.quantity.amount) >= 0 ) {
-        TRANSFER(tot.contract,
+      if ( (available_claim.quantity.amount - single_claim.quantity.amount) >= 0 ) {
+        TRANSFER(available_claim.contract,
                  beneficiary,
-                 per.quantity,
+                 single_claim.quantity,
                  std::string("airdrop:") + std::to_string(plan_id) + ":" + claimer.to_string());
-        tot.quantity -= per.quantity;
+        available_claim.quantity -= single_claim.quantity;
         ++paid_cnt;
       }
     }

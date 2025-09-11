@@ -2,7 +2,7 @@
 shopt -s expand_aliases
 source ~/.bashrc
 
-airdrop_con=airdrop11123
+airdrop_con=airdrop11125
 mreg flon $airdrop_con flonian
 mtran flon $airdrop_con "100.00000000 FLON"
 mset $airdrop_con flon.airdrop
@@ -55,6 +55,7 @@ mpush $airdrop_con addplan '[
      {"quantity":"5.00000000 FLON","contract":"flon.token"}
   ]
 ]' -p $admin
+
 
 mpush cisum.token transfer '["flonian", "'$airdrop_con'", "20.00000000 CISUM", "plan:2"]' -p flonian
 
