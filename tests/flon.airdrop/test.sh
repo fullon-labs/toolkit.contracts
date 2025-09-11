@@ -20,7 +20,7 @@ mpush $airdrop_con init '["flonian", ["myadmin","airdp.issuer"]]' -p $airdrop_co
 
 mpush $airdrop_con addtoken '["flon.token", "8,FLON"]' -p $admin
 mpush $airdrop_con addtoken '["cisum.token", "8,CISUM"]' -p $admin
-mpush $airdrop_con addtoken '["nest21.token", "4,NESTAR"]' -p $admin
+mpush $airdrop_con addtoken '["nestar.token", "4,NESTAR"]' -p $admin
 
 mpush $airdrop_con deltoken '["nest21.token", "4,NESTAR"]' -p $admin
 mpush $airdrop_con deltoken '["flon.token", "8,FLON"]' -p $admin

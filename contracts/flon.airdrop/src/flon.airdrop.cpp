@@ -100,10 +100,10 @@ void airdrop::deltoken(const name& token_bank, const symbol& sym) {
 }
 
 // ---------- 新建计划 ----------
-void airdrop::addplan(time_point started_at,
-                      time_point ended_at,
-                      const std::vector<token_rule_t>& claim_config,
-                      const string& title
+void airdrop::addplan(const string& title,
+                      const time_point& started_at,
+                      const time_point& ended_at,
+                      const std::vector<token_rule_t>& claim_config
                     ) {
   check(
         has_auth(_gstate.admin) || has_auth(get_self()),
@@ -137,11 +137,10 @@ void airdrop::addplan(time_point started_at,
 
   plans.emplace(get_self(), [&](auto& p){
     p.id               = _gstate.last_plan_id;
+    p.title            = title;
     p.plan_started_at  = started_at;
     p.plan_ended_at    = ended_at;
     p.claim_config     = cfg;
-    p.claimed_cnt      = 0;
-    p.title            = title;
     p.created_at       = now();
     p.updated_at       = p.created_at;
   });
@@ -150,6 +149,7 @@ void airdrop::addplan(time_point started_at,
 
 // ---------- 修改计划 ----------
 void airdrop::setplan(const uint64_t& plan_id,
+                      std::optional<string> title,
                       std::optional<time_point> started_at,
                       std::optional<time_point> ended_at,
                       std::optional<std::vector<token_rule_t>> claim_config) {
@@ -162,6 +162,7 @@ void airdrop::setplan(const uint64_t& plan_id,
   auto it = get_plan(plans, plan_id);
 
   plans.modify(it, same_payer, [&](auto& p){
+    if (title) p.title = *title;
     if (started_at) p.plan_started_at = *started_at;
     if (ended_at)   p.plan_ended_at   = *ended_at;
     CHECKC(p.plan_started_at <= p.plan_ended_at, err::VAILD_TIME_INVALID, "time window invalid");

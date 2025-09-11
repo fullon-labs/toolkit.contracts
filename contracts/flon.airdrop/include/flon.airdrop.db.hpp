@@ -46,19 +46,19 @@ struct token_rule_t {
  * ----------------------------- */
 NTBL("plans") plan_t {
     uint64_t     id;
+    string       title;
     time_point   plan_started_at;                 // 开始时间
     time_point   plan_ended_at;                   // 结束时间
     std::vector<token_rule_t> claim_config; // 每币配置：[总额度, 单人额度]
     uint64_t     claimed_cnt = 0;                 // 已领取人数
-    string       title;
     time_point   created_at;
     time_point   updated_at;
 
     uint64_t primary_key() const { return id; }
 
     EOSLIB_SERIALIZE(plan_t,
-        (id)(plan_started_at)(plan_ended_at)(claim_config)
-        (claimed_cnt)(title)(created_at)(updated_at)
+        (id)(title)(plan_started_at)(plan_ended_at)(claim_config)
+        (claimed_cnt)(created_at)(updated_at)
     )
 };
 typedef eosio::multi_index<"plans"_n, plan_t> plans_t;
