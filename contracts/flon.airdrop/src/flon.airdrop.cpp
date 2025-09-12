@@ -150,6 +150,40 @@ void airdrop::addplan(const string&             title,
     });
 }
 
+void airdrop::addclaims(const uint64_t& plan_id, const extended_asset& single_claim ) {
+   check(
+        has_auth(_gstate.admin) || has_auth(get_self()),
+        "[[16]] requires admin or self auth"
+    );
+
+    plans_t plans(get_self(), get_self().value);
+    auto it = get_plan(plans, plan_id);
+
+    auto token_conf = token_conf_s { 
+        single_claim, 
+        extended_asset{ asset{0, single_claim.quantity.symbol}, single_claim.contract }
+    };
+    std::vector<token_conf_s> cfg(1, token_conf );
+
+    plans.modify(it, same_payer, [&](auto& p){
+      p.claims = cfg;
+    });
+}
+
+void airdrop::delclaims(const uint64_t& plan_id) {
+   check(
+        has_auth(_gstate.admin) || has_auth(get_self()),
+        "[[16]] requires admin or self auth"
+    );
+
+    plans_t plans(get_self(), get_self().value);
+    auto it = get_plan(plans, plan_id);
+
+    plans.modify(it, same_payer, [&](auto& p){
+      p.claims.clear();
+    });
+}
+
 // ---------- 修改计划 ----------
 void airdrop::setplan(const uint64_t& plan_id,
                       std::optional<string> title,
@@ -177,18 +211,13 @@ void airdrop::setplan(const uint64_t& plan_id,
 
 void airdrop::claimairdrop(const uint64_t& plan_id,
                            const name&     claimer,
+                           const name&     beneficiary,
                            const std::string& memo) {
   // 必须由 oracle 签名发起
   require_auth(claimer);
   CHECKC(is_oracle(_gstate.oracles, claimer), err::DID_NOT_AUTH,
          "only oracle can claim");
-  CHECKC(!memo.empty(), err::INVALID_FORMAT, "memo required");
 
-  // memo: "user:<account>"
-  auto parts = split(memo, ":");
-  CHECKC(parts.size() == 2 && parts[0] == "user", err::INVALID_FORMAT,
-         "memo must be 'user:<account>'");
-  const name beneficiary(parts[1]);
   CHECKC(beneficiary.value && is_account(beneficiary), err::ACCOUNT_INVALID,
          "invalid beneficiary");
 
@@ -213,14 +242,15 @@ void airdrop::claimairdrop(const uint64_t& plan_id,
       CHECKC(single_claim.quantity.amount > 0, err::NOT_POSITIVE, "single_claim must be positive");
 
       // 足额才能发放（允许刚好等于）
-      if ( (available_claim.quantity.amount - single_claim.quantity.amount) >= 0 ) {
+      auto claim_quant = available_claim.quantity >= single_claim.quantity ? single_claim.quantity : available_claim.quantity;
+      
         TRANSFER(available_claim.contract,
                  beneficiary,
-                 single_claim.quantity,
-                 std::string("airdrop:") + std::to_string(plan_id) + ":" + claimer.to_string());
-        available_claim.quantity -= single_claim.quantity;
+                 claim_quant,
+                 std::string("airdrop:") + std::to_string(plan_id) );
+
+        available_claim.quantity -= claim_quant;
         ++paid_cnt;
-      }
     }
 
     CHECKC(paid_cnt > 0, err::INSUFFICIENT_QUANTITY,

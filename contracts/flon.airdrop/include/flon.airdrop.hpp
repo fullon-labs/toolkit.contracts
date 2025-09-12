@@ -93,10 +93,13 @@ public:
                       std::optional<time_point> ended_at
                       );
 
+  ACTION addclaims(const uint64_t& plan_id, const extended_asset& single_claim);
+  ACTION delclaims(const uint64_t& plan_id);
+
   /* ===== oracle 代领 ===== */
-  // memo 形如: "user:<account>"
   ACTION claimairdrop(const uint64_t& plan_id,
                       const name&     claimer,
+                      const name&     beneficiary,
                       const string&   memo);
 
   /* ===== 入金路由（仅接收 tokens 白名单中的币） ===== */
