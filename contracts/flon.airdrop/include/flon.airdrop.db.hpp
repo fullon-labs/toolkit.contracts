@@ -16,6 +16,7 @@ using std::string;
 using std::vector;
 using std::array;
 using std::set;
+using std::map;
 
 #define TBL struct [[eosio::table, eosio::contract("flon.airdrop")]]
 #define NTBL(name) struct [[eosio::table(name), eosio::contract("flon.airdrop")]]
@@ -38,11 +39,11 @@ typedef eosio::singleton<"global"_n, global_t> global_singleton;
  * ----------------------------- */
 
 
-struct token_conf_s {
-    extended_asset single_claim;        // 每用户可领
-    extended_asset available;           // 剩余额度
+struct claim_conf_s {
+    asset single_claim;        // 每用户可领
+    asset available;           // 剩余额度
 
-    EOSLIB_SERIALIZE(token_conf_s, (single_claim)(available))
+    EOSLIB_SERIALIZE(claim_conf_s, (single_claim)(available))
 };
 
 NTBL("plans") plan_t {
@@ -50,7 +51,7 @@ NTBL("plans") plan_t {
     string       title;
     time_point   plan_started_at;                 // 开始时间
     time_point   plan_ended_at;                   // 结束时间
-    std::vector<token_conf_s> claims;             // 单次领取额度（固定）-> 可用额度（余额池）
+    map<extended_symbol, claim_conf_s> claims;    // 单次领取额度（固定）-> 可用额度（余额池）
     uint64_t     claimed_cnt = 0;                 // 已领取人/次数
     time_point   created_at;
     time_point   updated_at;

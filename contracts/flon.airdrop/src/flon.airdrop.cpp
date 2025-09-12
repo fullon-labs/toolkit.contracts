@@ -102,9 +102,7 @@ void airdrop::deltoken(const name& token_bank, const symbol& sym) {
 // ---------- 新建计划 ----------
 void airdrop::addplan(const string&             title,
                       const time_point&         started_at,
-                      const time_point&         ended_at,
-                      const vector<extended_asset>& single_claims   // 多个 single_claim
-)
+                      const time_point&         ended_at )
 {
     // 允许 admin 或合约自身操作
     check(has_auth(_gstate.admin) || has_auth(get_self()),
@@ -112,27 +110,6 @@ void airdrop::addplan(const string&             title,
 
     // 基本时间校验
     CHECKC(started_at <= ended_at, err::VAILD_TIME_INVALID, "time window invalid");
-    CHECKC(!single_claims.empty(), err::INVALID_FORMAT, "single_claim set is empty");
-
-    std::vector<token_conf_s> cfg;
-    cfg.reserve(single_claims.size());
-
-    for (const auto& single_claim : single_claims) {
-        // 基本校验
-        CHECKC(is_account(single_claim.contract), err::ACCOUNT_INVALID, "token contract not exist: " + single_claim.contract.to_string());
-        CHECKC(single_claim.quantity.is_valid(),  err::INVALID_FORMAT,  "invalid asset");
-        CHECKC(single_claim.quantity.amount > 0,  err::NOT_POSITIVE,    "single_claim must be positive");
-
-        // 白名单/允许币种校验
-        assert_token_allowed(get_self(), single_claim.contract, single_claim.quantity.symbol);
-
-        // 规范化：强制 available=0
-        token_conf_s norm;
-        norm.single_claim   = single_claim;
-        norm.available = extended_asset{ asset{0, single_claim.quantity.symbol}, single_claim.contract };
-
-        cfg.emplace_back(norm);
-    }
 
     // 写入计划
     plans_t plans(get_self(), get_self().value);
@@ -144,33 +121,35 @@ void airdrop::addplan(const string&             title,
         p.title            = title;
         p.plan_started_at  = started_at;
         p.plan_ended_at    = ended_at;
-        p.claims           = cfg;
         p.created_at       = nowtp;
         p.updated_at       = nowtp;
     });
 }
 
-void airdrop::addclaims(const uint64_t& plan_id, const extended_asset& single_claim ) {
+ ACTION setclaim(const uint64_t& plan_id, const extended_symbol& symb, const asset& single_claim, const asset& allocated) {
    check(
         has_auth(_gstate.admin) || has_auth(get_self()),
         "[[16]] requires admin or self auth"
     );
 
+    CHECKC( single_claim.symbol == allocated.symbol, err::TYPE_INVALID, "single vs allocated type mismatch" )
+    // 基本校验
+    CHECKC(is_account(extended_symbol.contract), err::ACCOUNT_INVALID, "token contract not exist: " + extended_symbol.contract.to_string());
+    CHECKC(single_claim.amount > 0,  err::NOT_POSITIVE,    "single_claim must be positive");
+    CHECKC(allocated >= single_claim,  err::NOT_POSITIVE,    "allocated - single must be positive");
+
+    // 白名单/允许币种校验
+    assert_token_allowed(get_self(), extended_symbol.contract, extended_symbol.symbol);
+
     plans_t plans(get_self(), get_self().value);
     auto it = get_plan(plans, plan_id);
 
-    auto token_conf = token_conf_s { 
-        single_claim, 
-        extended_asset{ asset{0, single_claim.quantity.symbol}, single_claim.contract }
-    };
-    std::vector<token_conf_s> cfg(1, token_conf );
-
     plans.modify(it, same_payer, [&](auto& p){
-      p.claims = cfg;
+      p.claims[symb] = claim_conf_s { single_claim, allocated };
     });
 }
 
-void airdrop::delclaims(const uint64_t& plan_id) {
+void airdrop::delclaim(const uint64_t& plan_id, const extended_symbol& symb) {
    check(
         has_auth(_gstate.admin) || has_auth(get_self()),
         "[[16]] requires admin or self auth"
@@ -180,7 +159,7 @@ void airdrop::delclaims(const uint64_t& plan_id) {
     auto it = get_plan(plans, plan_id);
 
     plans.modify(it, same_payer, [&](auto& p){
-      p.claims.clear();
+      p.claims.erase( symb );
     });
 }
 
@@ -209,6 +188,15 @@ void airdrop::setplan(const uint64_t& plan_id,
   });
 }
 
+void airdrop::delplan( const uint64_t& plan_id) {
+  require_auth( _self );
+
+  plans_t plans(get_self(), get_self().value);
+  auto it = get_plan(plans, plan_id);
+
+  plans.erase( it );
+}
+
 void airdrop::claim(const uint64_t& plan_id,
                            const name&     claimer,
                            const name&     beneficiary,
@@ -231,25 +219,20 @@ void airdrop::claim(const uint64_t& plan_id,
   plans.modify(it, same_payer, [&](auto& p){
     uint32_t paid_cnt = 0;
 
-    for (auto& rule : p.claims) {
-      const auto& single_claim = rule.single_claim;
-      auto&       available_claim = rule.available;
-
-      CHECKC(available_claim.contract == single_claim.contract, err::ACCOUNT_INVALID,
-             "contract mismatch in rule");
-      CHECKC(available_claim.quantity.symbol == single_claim.quantity.symbol, err::SYMBOL_MISMATCH,
-             "symbol mismatch in rule");
-      CHECKC(single_claim.quantity.amount > 0, err::NOT_POSITIVE, "single_claim must be positive");
+    for (auto& claim : p.claims) {
+      const auto& claim_symb    = claim.first;
+      const auto& single_claim  = claim.second.single_claim;
+      auto&    available_claim  = claim.second.available;
 
       // 足额才能发放（允许刚好等于）
-      auto claim_quant = available_claim.quantity >= single_claim.quantity ? single_claim.quantity : available_claim.quantity;
+      auto claim_quant = available_claim >= single_claim ? single_claim : available_claim;
       
-        TRANSFER(available_claim.contract,
+        TRANSFER(claim_symb.contract,
                  beneficiary,
                  claim_quant,
                  std::string("airdrop:") + std::to_string(plan_id) );
 
-        available_claim.quantity -= claim_quant;
+        available_claim -= claim_quant;
         ++paid_cnt;
     }
 
@@ -261,36 +244,37 @@ void airdrop::claim(const uint64_t& plan_id,
   });
 }
 
-// ---------- 入金路由 ----------
-void airdrop::ontransfer(name from, name to, asset quantity, std::string memo) {
-  if (to != get_self() || from == get_self()) return;
 
-  CHECKC(quantity.amount > 0, err::NOT_POSITIVE, "quantity must be positive");
-  CHECKC(quantity.symbol.is_valid(), err::INVALID_FORMAT, "invalid symbol");
-  const name token_bank = get_first_receiver();
+// // ---------- 入金路由 ----------
+// void airdrop::ontransfer(name from, name to, asset quantity, std::string memo) {
+//   if (to != get_self() || from == get_self()) return;
 
-  // 白名单币
-  assert_token_allowed(get_self(), token_bank, quantity.symbol);
+//   CHECKC(quantity.amount > 0, err::NOT_POSITIVE, "quantity must be positive");
+//   CHECKC(quantity.symbol.is_valid(), err::INVALID_FORMAT, "invalid symbol");
+//   const name token_bank = get_first_receiver();
 
-  // memo: "plan:<plan_id>"
-  auto parts = split(memo, ":");
-  CHECKC(parts.size() == 2 && parts[0] == "plan", err::INVALID_FORMAT, "memo must be 'plan:<plan_id>'");
-  const uint64_t plan_id = to_uint64(parts[1], "plan_id");
+//   // 白名单币
+//   assert_token_allowed(get_self(), token_bank, quantity.symbol);
 
-  plans_t plans(get_self(), get_self().value);
-  auto it = get_plan(plans, plan_id);
+//   // memo: "plan:<plan_id>"
+//   auto parts = split(memo, ":");
+//   CHECKC(parts.size() == 2 && parts[0] == "plan", err::INVALID_FORMAT, "memo must be 'plan:<plan_id>'");
+//   const uint64_t plan_id = to_uint64(parts[1], "plan_id");
 
-  plans.modify(it, same_payer, [&](auto& p){
-    bool matched = false;
-    for (auto& r : p.claims) {
-      if (r.available.contract == token_bank && r.available.quantity.symbol == quantity.symbol) {
-        r.available.quantity += quantity;
-        matched = true;
-      }
-    }
-    CHECKC(matched, err::STATUS_MISMATCH, "plan has no such token rule");
-    p.updated_at = now();
-  });
-}
+//   plans_t plans(get_self(), get_self().value);
+//   auto it = get_plan(plans, plan_id);
+
+//   plans.modify(it, same_payer, [&](auto& p){
+//     bool matched = false;
+//     for (auto& r : p.claims) {
+//       if (r.available.contract == token_bank && r.available.quantity.symbol == quantity.symbol) {
+//         r.available.quantity += quantity;
+//         matched = true;
+//       }
+//     }
+//     CHECKC(matched, err::STATUS_MISMATCH, "plan has no such token rule");
+//     p.updated_at = now();
+//   });
+// }
 
 } // namespace flon

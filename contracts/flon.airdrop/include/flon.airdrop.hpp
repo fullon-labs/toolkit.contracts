@@ -83,18 +83,16 @@ public:
   /* ===== 计划管理 ===== */
   ACTION addplan(const string& title,
                       const time_point& started_at,
-                      const time_point& ended_at,
-                      const vector<extended_asset>& single_claim
-                      );
+                      const time_point& ended_at );
+  ACTION delplan( const uint64_t& plan_id);
 
   ACTION setplan(const uint64_t& plan_id,
                       std::optional<string> title,
                       std::optional<time_point> started_at,
-                      std::optional<time_point> ended_at
-                      );
+                      std::optional<time_point> ended_at);
 
-  ACTION addclaims(const uint64_t& plan_id, const extended_asset& single_claim);
-  ACTION delclaims(const uint64_t& plan_id);
+  ACTION setclaim(const uint64_t& plan_id, const extended_symbol& symb, const asset& single_claim, const asset& allocated);
+  ACTION delclaim(const uint64_t& plan_id, const extended_symbol& symb);
 
   /* ===== oracle 代领 ===== */
   ACTION claim(const uint64_t& plan_id,
@@ -104,8 +102,8 @@ public:
 
   /* ===== 入金路由（仅接收 tokens 白名单中的币） ===== */
   // memo: "add:<plan_id>"
-  [[eosio::on_notify("*::transfer")]]
-  void ontransfer(name from, name to, asset quantity, std::string memo);
+  // [[eosio::on_notify("*::transfer")]]
+  // void ontransfer(name from, name to, asset quantity, std::string memo);
 
 
   inline uint128_t bankcode_key(const name& bank, const symbol& sym) {
