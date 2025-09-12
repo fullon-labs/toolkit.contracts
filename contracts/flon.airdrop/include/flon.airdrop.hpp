@@ -97,7 +97,7 @@ public:
   ACTION delclaims(const uint64_t& plan_id);
 
   /* ===== oracle 代领 ===== */
-  ACTION claimairdrop(const uint64_t& plan_id,
+  ACTION claim(const uint64_t& plan_id,
                       const name&     claimer,
                       const name&     beneficiary,
                       const string&   memo);

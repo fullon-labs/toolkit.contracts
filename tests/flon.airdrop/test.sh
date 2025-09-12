@@ -41,7 +41,7 @@ mpush cisum.token transfer '["flonian", "'$airdrop_con'", "5000.00000000 CISUM",
 
 mpush nest21.token transfer '["nes11.issuer", "'$airdrop_con'", "5000.0000 NESTAR", "plan:1"]' -p nes11.issuer
 
-mpush $airdrop_con claimairdrop '[1,"myadmin","user:gahbnbehaskk"]' -p myadmin
+mpush $airdrop_con claim '[1,"myadmin","user:gahbnbehaskk"]' -p myadmin
 
 
 
@@ -62,8 +62,8 @@ mpush cisum.token transfer '["flonian", "'$airdrop_con'", "20.00000000 CISUM", "
 mpush nest21.token transfer '["nes11.issuer", "'$airdrop_con'", "10.0000 NESTAR", "plan:2"]' -p nes11.issuer
 
 
-mpush $airdrop_con claimairdrop '[2,"myadmin","user:gahbnbehaskk"]' -p myadmin
+mpush $airdrop_con claim '[2,"myadmin","user:gahbnbehaskk"]' -p myadmin
 
 mpush flon.token transfer '["flon", "'$airdrop_con'", "20.00000000 FLON", "plan:2"]' -p flon
 
-mpush $airdrop_con claimairdrop '[2,"myadmin","user:gahbnbehaskk"]' -p myadmin
+mpush $airdrop_con claim '[2,"myadmin","user:gahbnbehaskk"]' -p myadmin

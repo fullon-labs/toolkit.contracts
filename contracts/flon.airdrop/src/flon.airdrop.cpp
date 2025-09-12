@@ -209,7 +209,7 @@ void airdrop::setplan(const uint64_t& plan_id,
   });
 }
 
-void airdrop::claimairdrop(const uint64_t& plan_id,
+void airdrop::claim(const uint64_t& plan_id,
                            const name&     claimer,
                            const name&     beneficiary,
                            const std::string& memo) {
