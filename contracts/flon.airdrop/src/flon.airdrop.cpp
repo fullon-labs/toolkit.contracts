@@ -126,20 +126,21 @@ void airdrop::addplan(const string&             title,
     });
 }
 
- ACTION setclaim(const uint64_t& plan_id, const extended_symbol& symb, const asset& single_claim, const asset& allocated) {
+ void airdrop::setclaim(const uint64_t& plan_id, const extended_symbol& symb, const asset& single_claim, const asset& allocated) {
    check(
         has_auth(_gstate.admin) || has_auth(get_self()),
         "[[16]] requires admin or self auth"
     );
 
+    CHECKC( single_claim.symbol == symb.get_symbol(), err::TYPE_INVALID, "single vs symb type mismatch" )
     CHECKC( single_claim.symbol == allocated.symbol, err::TYPE_INVALID, "single vs allocated type mismatch" )
     // 基本校验
-    CHECKC(is_account(extended_symbol.contract), err::ACCOUNT_INVALID, "token contract not exist: " + extended_symbol.contract.to_string());
+    CHECKC(is_account(symb.get_contract()), err::ACCOUNT_INVALID, "token contract not exist: " + symb.get_contract().to_string());
     CHECKC(single_claim.amount > 0,  err::NOT_POSITIVE,    "single_claim must be positive");
     CHECKC(allocated >= single_claim,  err::NOT_POSITIVE,    "allocated - single must be positive");
 
     // 白名单/允许币种校验
-    assert_token_allowed(get_self(), extended_symbol.contract, extended_symbol.symbol);
+    assert_token_allowed(get_self(), symb.get_contract(), symb.get_symbol());
 
     plans_t plans(get_self(), get_self().value);
     auto it = get_plan(plans, plan_id);
@@ -227,7 +228,7 @@ void airdrop::claim(const uint64_t& plan_id,
       // 足额才能发放（允许刚好等于）
       auto claim_quant = available_claim >= single_claim ? single_claim : available_claim;
       
-        TRANSFER(claim_symb.contract,
+        TRANSFER(claim_symb.get_contract(),
                  beneficiary,
                  claim_quant,
                  std::string("airdrop:") + std::to_string(plan_id) );
