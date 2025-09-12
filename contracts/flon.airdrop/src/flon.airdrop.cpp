@@ -215,7 +215,7 @@ void airdrop::claim(const uint64_t& plan_id,
 
   const auto t = now();
   CHECKC(t >= it->plan_started_at && t <= it->plan_ended_at, err::EXPIRED,
-         "plan not in active window");
+         "plan not in active time window");
 
   plans.modify(it, same_payer, [&](auto& p){
     uint32_t paid_cnt = 0;
