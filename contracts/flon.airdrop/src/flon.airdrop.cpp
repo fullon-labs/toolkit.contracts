@@ -231,7 +231,7 @@ void airdrop::claim(const uint64_t& plan_id,
         TRANSFER(claim_symb.get_contract(),
                  beneficiary,
                  claim_quant,
-                 std::string("airdrop:") + std::to_string(plan_id) );
+                 std::string("plan:") + std::to_string(plan_id) );
 
         available_claim -= claim_quant;
         ++paid_cnt;
