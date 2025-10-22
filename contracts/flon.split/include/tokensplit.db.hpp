@@ -68,20 +68,14 @@ namespace action_name {
     static constexpr uint64_t PLAN          = "plan"_n.value;
 };
 
-namespace plan_status {
-    static constexpr name NONE              = "none"_n;
-    static constexpr name RUNNING           = "running"_n;
-    static constexpr name CLOSED            = "closed"_n;
-};
 
 NTBL("global") global_t {
     eosio::name             admin = "flonian"_n;
-    bool                    running = true;
     uint64_t                min_split_count = 2;
     uint64_t                max_split_count = 10;
     uint64_t                last_plan_id; 
 
-    EOSLIB_SERIALIZE( global_t, (admin)(running)(min_split_count)(max_split_count)(last_plan_id) )
+    EOSLIB_SERIALIZE( global_t, (admin)(min_split_count)(max_split_count)(last_plan_id) )
 };
 typedef eosio::singleton< "global"_n, global_t > global_singleton;
 
@@ -111,7 +105,6 @@ TBL token_split_plan_t {
     std::vector<split_unit_s>   split_conf;     //receiver -> rate_or_amount
     name                        split_type;     // auto or manual
     string                      title;
-    name                        status = plan_status::NONE;
     time_point_sec              create_at;
 
     uint64_t primary_key()const { return id; }

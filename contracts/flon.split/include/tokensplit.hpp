@@ -32,13 +32,9 @@ public:
 public:
     ACTION init( const name& admin, const uint64_t& min_count, const uint64_t& max_count);
 
-    ACTION paused(const bool& paused);
-
     ACTION addplan(const name& owner, const string& title, const vector<split_unit_s>& conf, const bool& is_auto);
 
     ACTION editplan(const name& owner,const uint64_t& plan_id,const vector<split_unit_s>& conf, const bool& is_auto);
-
-    ACTION closeplan(const name& creator, const uint64_t& plan_id);
 
     ACTION claim( const uint64_t& plan_id, const name& owner);
 
