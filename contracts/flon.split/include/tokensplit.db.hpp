@@ -65,7 +65,6 @@ namespace split_type {
     static constexpr eosio::name MANUAL           = "manual"_n;
 };
 namespace action_name {
-    static constexpr uint64_t FEE           = "fee"_n.value;
     static constexpr uint64_t PLAN          = "plan"_n.value;
 };
 
@@ -77,15 +76,12 @@ namespace plan_status {
 
 NTBL("global") global_t {
     eosio::name             admin = "flonian"_n;
-    uint64_t                last_plan_id; 
-
-    name                    fee_receiver = "flonian"_n;
-    asset                   fee = asset(100000000, SYS_SYMB);
     bool                    running = true;
     uint64_t                min_split_count = 2;
     uint64_t                max_split_count = 10;
+    uint64_t                last_plan_id; 
 
-    EOSLIB_SERIALIZE( global_t, (admin)(last_plan_id)(fee_receiver)(fee)(running)(min_split_count)(max_split_count) )
+    EOSLIB_SERIALIZE( global_t, (admin)(running)(min_split_count)(max_split_count)(last_plan_id) )
 };
 typedef eosio::singleton< "global"_n, global_t > global_singleton;
 
@@ -107,7 +103,6 @@ struct plan_event_t{
 
 //scope: sender account (usually a smart contract)
 //scope: _self
-// new version
 TBL token_split_plan_t {
     uint64_t                    id;        //PK
     name                        creator;
@@ -115,10 +110,9 @@ TBL token_split_plan_t {
     bool                        split_by_rate   = true;  //rate boost by 10000
     std::vector<split_unit_s>   split_conf;     //receiver -> rate_or_amount
     name                        split_type;     // auto or manual
-    asset                       paid_fee;       
     string                      title;
-    time_point_sec              create_at;
     name                        status = plan_status::NONE;
+    time_point_sec              create_at;
 
     uint64_t primary_key()const { return id; }
     uint64_t by_creator() const { return creator.value;}
@@ -128,21 +122,9 @@ TBL token_split_plan_t {
     > tbl_t;
 };
 
-// scope: self
-TBL account_t{
-    name                                owner;
-    
-    asset                               balance = asset(0,SYS_SYMB);
-
-    uint64_t primary_key()const { return owner.value; }
-
-    typedef multi_index<"accounts"_n, account_t > tbl_t;
-};
-
 // scope: plan_id
 TBL wallet_t {
-    name                                owner;
-
+    name                                owner;  //PK
     map<extended_symbol, asset>         balances;
     time_point_sec                      create_at;
     time_point_sec                      update_at;

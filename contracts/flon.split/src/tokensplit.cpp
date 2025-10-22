@@ -76,21 +76,20 @@ inline void check_rate(const vector<split_unit_s>& confs){
     CHECKC( init_rate == PCT_BOOST,err::OVERSIZED,"The total number should be 100%");
 }
 
-void tokensplit::init(const name& admin,const asset& fee,const uint64_t& min_count, const uint64_t& max_count) {
+void tokensplit::init(const name& admin, const uint64_t& min_count, const uint64_t& max_count) {
     require_auth( _self );
 
     CHECKC( is_account(admin),err::RECORD_NOT_FOUND,"account invalid" )
-    CHECKC( fee.symbol.raw() == SYS_SYMB.raw(), err::DATA_MISMATCH,"fee musdt be FLON")
     CHECKC( min_count >= 1 && max_count <= 50, err::PARAM_ERROR,"The number of split accounts should be 1-50")
+
     _gstate.admin = admin;
-    _gstate.fee = fee;
     _gstate.max_split_count = max_count;
     _gstate.min_split_count = min_count;
 }
 
 void tokensplit::paused( const bool& paused){
+    CHECKC( has_auth(_self) || has_auth(_gstate.admin), err::NO_AUTH, "no auth");
 
-    CHECKC( has_auth(_self) || has_auth(_gstate.admin),err::NO_AUTH,"no auth");
     _gstate.running = !paused;
 }
 
@@ -104,29 +103,17 @@ void tokensplit::addplan(const name& owner, const string& title, const vector<sp
     CHECKC( title.size() >= 4 && title.size()<= 255,err::OVERSIZED, "Title length should be 4-255" );
     
     check_rate(conf);
-    auto fee = _gstate.fee;
-    if ( owner != _gstate.admin){
-        account_t::tbl_t accounts( _self, _self.value);
-        auto account_itr = accounts.find(owner.value);
-        CHECKC( account_itr != accounts.end() , err::PARAM_ERROR,"account not found!")
-        CHECKC( account_itr -> balance >= _gstate.fee, err::PARAM_ERROR,"Unpaid")
 
-        accounts.modify(account_itr, same_payer,[&]( auto& row){
-            row.balance -= _gstate.fee;
-        });
-    }
-    
     token_split_plan_t::tbl_t plans( _self, _self.value);
-    plans.emplace( _self, [&]( auto& row ) {
+    plans.emplace( owner, [&]( auto& row ) {
         // row.split_by_rate   = true;
         row.id              = ++_gstate.last_plan_id;
         row.title           = title;
         row.creator         = owner;
         row.split_conf      = conf;
         row.split_type      = is_auto ? split_type::AUTO : split_type::MANUAL;
-        row.paid_fee        = fee;
-        row.create_at       = current_time_point();
         row.status          = plan_status::RUNNING;
+        row.create_at       = current_time_point();
     });
 }
 
@@ -137,6 +124,7 @@ void tokensplit::editplan(const name& owner, const uint64_t& plan_id, const vect
     uint64_t size = conf.size();
     CHECKC( size >= _gstate.min_split_count && size <= _gstate.max_split_count,err::OVERSIZED,"Number of users is "+ to_string(_gstate.min_split_count) + "-" + to_string(_gstate.max_split_count))
     check_rate(conf);
+
     token_split_plan_t::tbl_t plans( _self, _self.value);
     auto plan_itr = plans.find(plan_id);
     CHECKC( plan_itr != plans.end(), err::RECORD_NOT_FOUND,"plan not found!")
@@ -242,10 +230,6 @@ void tokensplit::ontransfer(const name& from, const name& to, const asset& quant
     auto action_name = name(memo_params[0]) ;
 
     switch (action_name.value){
-        case action_name::FEE:
-            _recharge_fee(from, quant);
-            break;
-
         case action_name::PLAN:
         {
             auto plan_id = stoi( string( memo_params[1] ));
@@ -263,26 +247,6 @@ void tokensplit::ontransfer(const name& from, const name& to, const asset& quant
     }
 }
 
-
-void tokensplit::_recharge_fee( const name& owner, const asset& quantity){
-
-    CHECKC( get_first_receiver() == SYS_BANK, err::RECORD_NOT_FOUND, "not flon.token")
-    CHECKC( quantity.symbol == SYS_SYMB, err::RECORD_NOT_FOUND, "not FLON")
-    CHECKC( quantity >= _gstate.fee, err::PARAM_ERROR,"Unpaid")
-
-    account_t::tbl_t accounts(_self,_self.value);
-    auto account_itr = accounts.find(owner.value);
-
-    db::set( accounts, account_itr, _self, _self, [&]( auto& p, bool is_new ){
-        if ( is_new){
-            p.owner = owner;
-        }
-        p.balance += quantity;
-    });
-
-    if ( is_account(_gstate.fee_receiver) )
-        TRANSFER( SYS_BANK, _gstate.fee_receiver, quantity, "" ) 
-}
 
 void tokensplit::_split( const name& from, const uint64_t& plan_id, const asset& quant, const uint64_t& boost ){
     token_split_plan_t::tbl_t plans( _self, _self.value);

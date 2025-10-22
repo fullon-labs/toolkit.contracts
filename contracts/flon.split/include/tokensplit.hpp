@@ -30,7 +30,7 @@ public:
     }
 
 public:
-    ACTION init( const name& admin,const asset& fee, const uint64_t& min_count, const uint64_t& max_count);
+    ACTION init( const name& admin, const uint64_t& min_count, const uint64_t& max_count);
 
     ACTION paused(const bool& paused);
 
@@ -53,7 +53,6 @@ public:
     using claimall_action = eosio::action_wrapper<"claimall"_n, &tokensplit::claimall>; 
 
 private:
-    void _recharge_fee( const name& owner, const asset& quantity);
     void _split( const name& from, const uint64_t& plan_id, const asset& quantity,const uint64_t& boost);
     void _add_wallet( const name& owner, const uint64_t& plan_id, const name& contract, const asset& quantity);
     bool _empty_wallets(const uint64_t& plan_id);
