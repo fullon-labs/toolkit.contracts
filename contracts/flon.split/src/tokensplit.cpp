@@ -209,10 +209,10 @@ void tokensplit::claimall( const uint64_t& plan_id ){
     CHECKC( _empty_wallets( plan_id ), err::RECORD_NOT_FOUND, "no wallet to be claimed" )
 }
 
-//for chainscan to check with 
-void tokensplit::plantrace( const plan_trace_t& trace ){
-    require_auth(get_self());
-}
+// //for chainscan to check with 
+// void tokensplit::plantrace( const plan_trace_t& trace ){
+//     require_auth(get_self());
+// }
 
 
 /**

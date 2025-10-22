@@ -44,12 +44,12 @@ public:
 
     ACTION claimall( const uint64_t& plan_id );
 
-    ACTION plantrace( const plan_trace_t& trace);
+    // ACTION plantrace( const plan_trace_t& trace);
 
     [[eosio::on_notify("*::transfer")]]
     void ontransfer(const name& from, const name& to, const asset& quant, const string& memo);
 
-    using plantrace_action = eosio::action_wrapper<"plantrace"_n, &tokensplit::plantrace>; 
+    // using plantrace_action = eosio::action_wrapper<"plantrace"_n, &tokensplit::plantrace>; 
     using claimall_action = eosio::action_wrapper<"claimall"_n, &tokensplit::claimall>; 
 
 private:
