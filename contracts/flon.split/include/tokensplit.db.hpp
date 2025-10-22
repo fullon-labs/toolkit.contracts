@@ -123,7 +123,7 @@ TBL token_split_plan_t {
     uint64_t primary_key()const { return id; }
     uint64_t by_creator() const { return creator.value;}
 
-    typedef multi_index<"splitplans"_n, token_split_plan_t ,
+    typedef multi_index<"plans"_n, token_split_plan_t ,
     indexed_by<"by.creatidx"_n,  const_mem_fun<token_split_plan_t, uint64_t, &token_split_plan_t::by_creator> > 
     > tbl_t;
 };

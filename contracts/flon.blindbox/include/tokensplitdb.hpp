@@ -33,7 +33,7 @@ struct split_plan_t {
 
     uint64_t primary_key()const { return id; }
 
-    typedef multi_index<"splitplans"_n, split_plan_t > tbl_t;
+    typedef multi_index<"plans"_n, split_plan_t > tbl_t;
 
     EOSLIB_SERIALIZE( split_plan_t, (id)(token_symbol)(split_by_rate)(split_conf) )
 };
