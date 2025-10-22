@@ -13,9 +13,9 @@ using namespace wasm::safemath;
 // using namespace eosiosystem;
 static constexpr name ACTIVE_PERM       = "active"_n;
 
-#define PLANTRACE(plan_trace_t)                             \
-            tokensplit::plantrace_action(get_self(), {{get_self(), ACTIVE_PERM}}) \
-               .send(plan_trace_t);
+#define NOTIFY_PLAN(plan_event_t)                             \
+            tokensplit::notifyplan_action(get_self(), {{get_self(), ACTIVE_PERM}}) \
+               .send(plan_event_t);
 
 #define CLAIMALL(plan_id)                             \
             tokensplit::claimall_action(get_self(), {{get_self(), ACTIVE_PERM}}) \
@@ -209,10 +209,10 @@ void tokensplit::claimall( const uint64_t& plan_id ){
     CHECKC( _empty_wallets( plan_id ), err::RECORD_NOT_FOUND, "no wallet to be claimed" )
 }
 
-// //for chainscan to check with 
-// void tokensplit::plantrace( const plan_trace_t& trace ){
-//     require_auth(get_self());
-// }
+//for chainscan to check with 
+void tokensplit::notifyplan( const plan_event_t& trace ){
+    require_auth(get_self());
+}
 
 
 /**
@@ -301,15 +301,15 @@ void tokensplit::_split( const name& from, const uint64_t& plan_id, const asset&
         // tokens.amount = ( plan_itr->split_by_rate ) ? multiply_decimal( quant.amount, amount, PCT_BOOST ) : multiply_decimal( amount, get_precision(quant.symbol), PCT_BOOST );
         CHECKC( tokens <= current_quant, err::RATE_OVERLOAD, "Insufficient distribution balance")
 
-        plan_trace_t trace;
-        trace.issuer            = from;
-        trace.plan_id           = plan_id;
-        trace.receiver          = to;
-        trace.contract          = token_bank;
-        trace.base_quantity     = quant;
-        trace.divide_quantity   = tokens;
-        trace.rate              = amount;
-        PLANTRACE( trace );
+        plan_event_t plan_event;
+        plan_event.issuer            = from;
+        plan_event.plan_id           = plan_id;
+        plan_event.receiver          = to;
+        plan_event.contract          = token_bank;
+        plan_event.base_quantity     = quant;
+        plan_event.divide_quantity   = tokens;
+        plan_event.rate              = amount;
+        NOTIFY_PLAN( plan_event );
 
         if( plan_itr->split_type == split_type::AUTO ){
             TRANSFER( token_bank, to, tokens, "" )

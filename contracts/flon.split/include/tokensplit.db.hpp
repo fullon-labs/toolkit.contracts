@@ -95,7 +95,7 @@ struct split_unit_s {
     uint64_t token_split_amount; //rate or amount, amount must contain precision
 };
 
-struct plan_trace_t{
+struct plan_event_t{
     uint64_t plan_id;
     name issuer;
     name receiver;
