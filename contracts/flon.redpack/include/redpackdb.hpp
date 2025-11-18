@@ -60,6 +60,7 @@ struct TG_TBL redpack_t {
     name            creator; //redpack creator, the one who deposit the token
     bool            did_required = false; //是否需要DID验证
     bool            unwrapped_by_admin = true; //如果是管理员帮助领取，则管理员支付Gas费, 否则用户拆红包并支付Gas费
+    name            cover_code;           //红包的图片编号
 
     // if did_required is true, then passwd_hash is the DID id, otherwise it is the password hash
     string          passwd_hash;    //redpack password hash
@@ -80,7 +81,7 @@ struct TG_TBL redpack_t {
 
     typedef eosio::multi_index<"redpacks"_n, redpack_t> idx_t;
 
-    EOSLIB_SERIALIZE( redpack_t, (code)(assign_type)(creator)(did_required)(unwrapped_by_admin)
+    EOSLIB_SERIALIZE( redpack_t, (code)(assign_type)(creator)(did_required)(unwrapped_by_admin)(cover_code)
                                  (passwd_hash)(token_contract)(total_quant)(total_count)(remaining_quant)(remaining_count)
                                 (fee)(status)(created_at)(updated_at) )
 };
@@ -92,7 +93,7 @@ struct TG_TBL claim_t {
     name            claimer;                    // who receives the redpack
     asset           quantity;                   //amount to receive
     time_point      claimed_at;                 //claim time: when the redpack is claimed
-    
+
     claim_t() {}
     claim_t( const uint64_t& i ): id(i) {}
 
@@ -108,7 +109,7 @@ struct TG_TBL claim_t {
 
 struct TG_TBL tokenlist_t {
     uint64_t        id;
-    name            token_contract;   
+    name            token_contract;
     symbol          token_symbol;
 
     tokenlist_t(){}

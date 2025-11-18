@@ -227,7 +227,7 @@ void airdrop::claim(const uint64_t& plan_id,
 
       // 足额才能发放（允许刚好等于）
       auto claim_quant = available_claim >= single_claim ? single_claim : available_claim;
-      
+
         TRANSFER(claim_symb.get_contract(),
                  beneficiary,
                  claim_quant,
@@ -277,5 +277,8 @@ void airdrop::claim(const uint64_t& plan_id,
 //     p.updated_at = now();
 //   });
 // }
+
+
+
 
 } // namespace flon

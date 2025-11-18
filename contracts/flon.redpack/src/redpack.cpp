@@ -38,20 +38,20 @@ void redpack::delisttoken( const uint64_t& token_id ) {
 
 void redpack::listtoken(const name& contract, const symbol& sym ) {
     require_auth( _gstate.admin );
-    
+
     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
     auto tokenlist_index = tokenlist_tbl.get_index<"by.consymb"_n>();
     uint128_t sec_index = get_unionid(contract, sym.raw());
     auto tokenlist_iter = tokenlist_index.find(sec_index);
     auto found          = tokenlist_iter != tokenlist_index.end();
     auto tid            = found ? tokenlist_iter->id : tokenlist_tbl.available_primary_key();
-    
+
     auto token          = tokenlist_t( tid );
     _db.get( token );
 
     token.token_contract    = contract;
     token.token_symbol      = sym;
-    
+
     _db.set(token, _self);
 }
 
@@ -65,9 +65,9 @@ void redpack::on_mtoken_transfer( const name& from, const name& to, const asset&
     _token_transfer( from, to, quantity, memo );
 }
 
-void redpack::on_tychetoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo) 
-{ 
-    _token_transfer( from, to, quantity, memo ); 
+void redpack::on_tychetoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo)
+{
+    _token_transfer( from, to, quantity, memo );
 }
 
 // deposit redpack memo format: [ wrap:$code:$type:$did_required:$count:$password_hash ]
@@ -98,7 +98,7 @@ void redpack::_token_transfer(const name& from, const name& to, const asset& qua
 }
 
 // -------------------------- 内部方法分离 ------------------------------
-// memo format: [ wrap:$code:$type:$did_required:$count:$password_hash ]
+// memo format: [ wrap:$code:$type:$did_required:$count:$password_hash:$cover_code ]
 void redpack::_handle_deposit(const name& from, const asset& quantity, const vector<string>& parts) {
     CHECKC(parts.size() >= 6, err::INVALID_FORMAT, "invalid wrap memo format");
 
@@ -127,7 +127,7 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
     // parts[3]: did_required
     bool did_required = (stoi(parts[3]) == 1);
     print_f("🔐 did_required: %\n", did_required);
-    
+
     // parts[4]: count
     int count = stoi(parts[4]);
     CHECKC(count > 0, err::NOT_POSITIVE, "redpack count must be positive");
@@ -135,6 +135,9 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
 
     // parts[5]: password_hash
     string passwd_hash = parts[5];
+
+    // parts[5]: cover_code
+    auto cover_code = name(parts[6]);
 
     auto symb = quantity.symbol.code().to_string();
     CHECKC(quantity.amount / count >= 100, err::INSUFFICIENT_QUANTITY, "Minimal unit 100 " + symb + " required");
@@ -152,6 +155,7 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
         row.assign_type     = rp_type;
         row.creator         = from;
         row.passwd_hash     = passwd_hash;
+        row.cover_code      = cover_code;
         row.token_contract  = token_contract;
         row.total_quant     = quantity;
         row.total_count     = count;
@@ -172,14 +176,14 @@ void redpack::_handle_fee_payment(const asset& fee_quant, const vector<string>& 
     CHECKC( _gstate.unwrap_unit_fee.amount > 0, err::FEE_NOT_REQUIRED, "zero fee charged" )
     CHECKC( _gstate.unwrap_fee_required, err::FEE_NOT_REQUIRED, "fee not required" )
     CHECKC( fee_quant.symbol == SYS_SYMBOL, err::SYMBOL_MISMATCH, "Only FLON fees are accepted" )
-    
+
     name code = name(parts[0]);
     redpack_t redpack(code);
     CHECKC( redpack.unwrapped_by_admin, err::ACCOUNT_INVALID, "" )
 
     CHECKC( _db.get(redpack), err::REDPACK_EXIST, "redpack not yet created" )
-    
-    
+
+
     auto fee_required = redpack.total_count * _gstate.unwrap_unit_fee;
     CHECKC( fee_quant.amount >= fee_required.amount, err::FEE_NOT_POSITIVE, "insufficient fee: " + fee_required.to_string() )
 

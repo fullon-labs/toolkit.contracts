@@ -100,6 +100,8 @@ public:
                       const name&     beneficiary,
                       const string&   memo);
 
+  ACTION inviterfund(const name& inviter, const name& invitee);
+
   /* ===== 入金路由（仅接收 tokens 白名单中的币） ===== */
   // memo: "add:<plan_id>"
   // [[eosio::on_notify("*::transfer")]]

@@ -2,7 +2,7 @@
 shopt -s expand_aliases
 source ~/.bashrc
 
-airdrop_con=airdrop11125
+airdrop_con=flon.airdrop
 mreg flon $airdrop_con flonian
 mtran flon $airdrop_con "100.00000000 FLON"
 mset $airdrop_con flon.airdrop
@@ -19,10 +19,10 @@ mpush $airdrop_con init '["flonian", ["myadmin","airdp.issuer"]]' -p $airdrop_co
 
 
 mpush $airdrop_con addtoken '["flon.token", "8,FLON"]' -p $admin
-mpush $airdrop_con addtoken '["cisum.token", "8,CISUM"]' -p $admin
-mpush $airdrop_con addtoken '["nestar.token", "4,NESTAR"]' -p $admin
+mpush $airdrop_con addtoken '["cisum.token", "8,SING"]' -p $admin
+mpush $airdrop_con addtoken '["nestar.token", "4,SONG"]' -p $admin
 
-mpush $airdrop_con deltoken '["nest21.token", "4,NESTAR"]' -p $admin
+mpush $airdrop_con deltoken '["nestar.token", "4,SONG"]' -p $admin
 mpush $airdrop_con deltoken '["flon.token", "8,FLON"]' -p $admin
 mpush $airdrop_con deltoken '["cisum.token", "8,CISUM"]' -p $admin
 
@@ -30,14 +30,23 @@ mpush $airdrop_con deltoken '["cisum.token", "8,CISUM"]' -p $admin
 mpush $airdrop_con addplan '[
   "test",
   "2025-09-10T00:00:00",
-  "2025-09-20T23:59:59",
+  "2025-10-20T23:59:59",
   [
-    { "quantity":"10.00000000 CISUM", "contract":"cisum.token" }
+    { "quantity":"10.00000000 SING", "contract":"cisum.token" }
   ]
 ]' -p $admin
 
 
-mpush cisum.token transfer '["flonian", "'$airdrop_con'", "5000.00000000 CISUM", "plan:1"]' -p flonian
+mpush $airdrop_con setclaim '[
+  1,
+  ["8,SING", "cisum.token"],
+  "10.00000000 SING",
+  "1000.00000000 SING"
+]' -p $admin
+
+
+
+mpush cisum.token transfer '["flonian", "'$airdrop_con'", "5000.00000000 SING", "plan:1"]' -p flonian
 
 mpush nest21.token transfer '["nes11.issuer", "'$airdrop_con'", "5000.0000 NESTAR", "plan:1"]' -p nes11.issuer
 
@@ -67,3 +76,9 @@ mpush $airdrop_con claim '[2,"myadmin","user:gahbnbehaskk"]' -p myadmin
 mpush flon.token transfer '["flon", "'$airdrop_con'", "20.00000000 FLON", "plan:2"]' -p flon
 
 mpush $airdrop_con claim '[2,"myadmin","user:gahbnbehaskk"]' -p myadmin
+
+
+
+
+mpush $airdrop_con  addoracle '["pxuqby4g5ogz"]' -p myadmin
+
