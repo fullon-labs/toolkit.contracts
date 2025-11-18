@@ -136,7 +136,7 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
     // parts[5]: password_hash
     string passwd_hash = parts[5];
 
-    // parts[5]: cover_code
+    // parts[6]: cover_code
     auto cover_code = name(parts[6]);
 
     auto symb = quantity.symbol.code().to_string();
