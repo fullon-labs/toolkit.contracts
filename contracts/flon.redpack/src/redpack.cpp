@@ -147,10 +147,15 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
                err::DID_PACK_SYMBOL_ERR, "DID redpack tokens can only be FLON|MUSDT|MUSDC|TYCHE");
     }
 
+    auto globalidx = _globalidx.get_or_default();
+    globalidx.last_redpack_id += 1;
+    _globalidx.set(globalidx, _self);
+    uint64_t new_redpack_id = globalidx.last_redpack_id;
     // 保存红包信息
     redpack_t::idx_t redpacks(_self, _self.value);
     auto now = current_time_point();
     redpacks.emplace(_self, [&](auto& row) {
+        row.redpack_id      = new_redpack_id;
         row.code            = code;
         row.assign_type     = rp_type;
         row.creator         = from;
@@ -258,7 +263,7 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     CHECKC(redpack.remaining_count > 0, err::INSUFFICIENT_QUANTITY, "no redpack left");
 
     // 9. 发放红包（合约转账）
-    TRANSFER_OUT(redpack.token_contract, claimer, assigned_quant, "redpack: " + code.to_string());
+    TRANSFER_OUT(redpack.token_contract, claimer, assigned_quant, "redpack: " + code.to_string()+", from:"+redpack.creator.to_string());
 
     // 10. 更新红包主表
     redpack.remaining_quant -= assigned_quant;
@@ -270,8 +275,13 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     _db.set(redpack, _self);
 
     // 11. 保存领取记录
+    auto globalidx = _globalidx.get_or_default();
+    globalidx.last_claim_id += 1;
+    _globalidx.set(globalidx, _self);
+    uint64_t new_claim_id = globalidx.last_claim_id;
     claims.emplace(_self, [&](auto& row) {
-        row.id              = claims.available_primary_key();
+        row.id              = new_claim_id;
+        row.redpack_id      = redpack.redpack_id;
         row.redpack_code    = code;
         row.redpack_creator = redpack.creator;
         row.claimer         = claimer;
@@ -381,4 +391,27 @@ uint64_t redpack::_rand(asset max_quantity, uint16_t min_unit) {
 
     // 6. 返回最终随机金额
     return rand_units * min_unit_value;
+}
+
+
+void redpack::setglobalidx(const uint64_t last_redpack_id,const uint64_t last_claim_id)
+{
+    require_auth(get_self());   // 只允许合约自己或管理员修改
+
+    globalidx_singleton globalidx_s(get_self(), get_self().value);
+
+    auto g = globalidx_s.get_or_default();
+
+    // 只有传入的值非 0 才更新（你可根据需要调整逻辑）
+    if (last_redpack_id > 0) {
+        g.last_redpack_id = last_redpack_id;
+    }
+    if (last_claim_id > 0) {
+        g.last_claim_id = last_claim_id;
+    }
+
+    globalidx_s.set(g, get_self());
+
+    print_f("✔ globalidx updated: last_redpack_id=% , last_claim_id=%\n",
+            g.last_redpack_id, g.last_claim_id);
 }
