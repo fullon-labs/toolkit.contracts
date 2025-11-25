@@ -13,7 +13,7 @@ using namespace std;
 /* -----------------------------
  * Global 配置（singleton）
  * ----------------------------- */
-struct [[eosio::table, eosio::contract("flon.airdrop")]] global_t {
+struct [[eosio::table, eosio::contract("tokensummary")]] global_t {
     name            admin = "flonian"_n;              // 管理员账户
     EOSLIB_SERIALIZE(global_t, (admin))
 };
