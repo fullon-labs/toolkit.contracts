@@ -30,6 +30,15 @@ class [[eosio::contract("tokensummary")]] token_summary : public contract {
 public:
     using contract::contract;
 
+    token_summary(eosio::name receiver, eosio::name code, datastream<const char*> ds)
+        : contract(receiver, code, ds),
+        _global(get_self(), get_self().value)
+    {
+        _gstate = _global.exists() ? _global.get() : global_t{};
+    }
+
+    ~token_summary() { _global.set(_gstate, get_self()); }
+
     ACTION addtoken(const name& bank, const symbol& sym);
     ACTION deltoken(const name& bank, const symbol& sym);
 
@@ -37,9 +46,12 @@ public:
     TokenSummary view(const name& account);
 
 private:
-    void _balance(const name& bank, const symbol& symb, const name& account, asset& balance) ;
+    void _balance(const name& bank, const symbol& symb, const name& account, asset& balance);
+    std::string format_amount(int64_t amount, uint8_t precision);
 
-    std::string format_amount(int64_t amount, uint8_t precision) ;
+private:
+    global_singleton _global;
+    global_t         _gstate;
 };
 
 }

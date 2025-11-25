@@ -32,7 +32,7 @@ std::string token_summary::format_amount(int64_t amount, uint8_t precision) {
 }
 
 void token_summary::addtoken(const name& bank, const symbol& sym) {
-    require_auth(get_self());
+    require_auth(_gstate.admin);
 
     check(is_account(bank), "bank account not exist");
     check(sym.is_valid(),   "invalid symbol");
@@ -49,7 +49,7 @@ void token_summary::addtoken(const name& bank, const symbol& sym) {
 }
 
 void token_summary::deltoken(const name& bank, const symbol& sym) {
-    require_auth(get_self());
+    require_auth(_gstate.admin);
 
     token_cfg_t cfg(get_self(), get_self().value);
     auto pk = make_tokencfg_pk(bank, sym);
