@@ -31,13 +31,16 @@ public:
     using contract::contract;
 
     token_summary(eosio::name receiver, eosio::name code, datastream<const char*> ds)
-        : contract(receiver, code, ds),
-        _global(get_self(), get_self().value)
-    {
-        _gstate = _global.exists() ? _global.get() : global_t{};
-    }
-
+    : contract(receiver, code, ds),
+      _global(get_self(), get_self().value),
+      _gstate(_global.exists() ? _global.get() : global_t{}) {}
+      
     ~token_summary() { _global.set(_gstate, get_self()); }
+
+    ACTION init( const name& admin ) { 
+        require_auth( _self );
+        _gstate.admin = admin; 
+    }
 
     ACTION addtoken(const name& bank, const symbol& sym);
     ACTION deltoken(const name& bank, const symbol& sym);
