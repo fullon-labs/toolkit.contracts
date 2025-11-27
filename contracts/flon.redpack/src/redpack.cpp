@@ -263,7 +263,7 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     CHECKC(redpack.remaining_count > 0, err::INSUFFICIENT_QUANTITY, "no redpack left");
 
     // 9. 发放红包（合约转账）
-    TRANSFER_OUT(redpack.token_contract, claimer, assigned_quant, "redpack: " + code.to_string()+", from:"+redpack.creator.to_string());
+    TRANSFER_OUT(redpack.token_contract, claimer, assigned_quant, "claim:"+redpack.creator.to_string()+":"+ std::to_string(code.value) );
 
     // 10. 更新红包主表
     redpack.remaining_quant -= assigned_quant;
@@ -308,7 +308,8 @@ void redpack::cancel(const name& code)
             redpack.token_contract,
             redpack.creator,
             redpack.remaining_quant,
-            string("redpack remaining returned"));
+            "returned:"+redpack.creator.to_string()+":"+ std::to_string(code.value)
+            );
     }
 
     _db.del(redpack);
