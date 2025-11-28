@@ -100,7 +100,7 @@ void redpack::_token_transfer(const name& from, const name& to, const asset& qua
 // -------------------------- 内部方法分离 ------------------------------
 // memo format: [ wrap:$code:$type:$did_required:$count:$password_hash:$cover_code ]
 void redpack::_handle_deposit(const name& from, const asset& quantity, const vector<string>& parts) {
-    CHECKC(parts.size() >= 6, err::INVALID_FORMAT, "invalid wrap memo format");
+    CHECKC(parts.size() >= 7, err::INVALID_FORMAT, "invalid wrap memo format");
 
     auto token_contract = get_first_receiver();
     print_f("🧾 deposit from: %, quantity: %, memo_parts: %\n", from, quantity, parts.size());
@@ -182,12 +182,10 @@ void redpack::_handle_fee_payment(const asset& fee_quant, const vector<string>& 
     CHECKC( _gstate.unwrap_fee_required, err::FEE_NOT_REQUIRED, "fee not required" )
     CHECKC( fee_quant.symbol == SYS_SYMBOL, err::SYMBOL_MISMATCH, "Only FLON fees are accepted" )
 
-    name code = name(parts[0]);
+    name code = name(parts[1]);
     redpack_t redpack(code);
-    CHECKC( redpack.unwrapped_by_admin, err::ACCOUNT_INVALID, "" )
-
     CHECKC( _db.get(redpack), err::REDPACK_EXIST, "redpack not yet created" )
-
+    CHECKC( redpack.unwrapped_by_admin, err::ACCOUNT_INVALID, "this redpack does not require admin unwrap" );
 
     auto fee_required = redpack.total_count * _gstate.unwrap_unit_fee;
     CHECKC( fee_quant.amount >= fee_required.amount, err::FEE_NOT_POSITIVE, "insufficient fee: " + fee_required.to_string() )
@@ -215,10 +213,16 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     // 3. 校验口令哈希
     CHECKC(redpack.passwd_hash == pwhash, err::PWHASH_INVALID, "incorrect password");
 
-    // 4. 校验红包状态
+    // 4. 防止重复领取（索引: claimer + code）
+    claim_t::idx_t claims(_self, _self.value);
+    auto claims_index = claims.get_index<"by.unionid"_n>();
+    uint128_t union_id = get_unionid(claimer, code.value);
+    CHECKC(claims_index.find(union_id) == claims_index.end(), err::NOT_REPEAT_RECEIVE, "already claimed");
+
+    // 5. 校验红包状态
     CHECKC(redpack.status == redpack_status::SERVICING, err::EXPIRED, "redpack not available for claiming");
 
-    // 5. DID 红包校验
+    // 6. DID 红包校验
     if (redpack.did_required) {
         const auto& required_dids = _gstate.dids; // set<uint64_t>
         CHECKC(!required_dids.empty(), err::DID_NOT_SUPPORTED, "DID not supported");
@@ -240,13 +244,9 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
         CHECKC(matched, err::DID_NOT_AUTH, "DID not authorized");
     }
 
-    // 6. 防止重复领取（索引: claimer + code）
-    claim_t::idx_t claims(_self, _self.value);
-    auto claims_index = claims.get_index<"by.unionid"_n>();
-    uint128_t union_id = get_unionid(claimer, code.value);
-    CHECKC(claims_index.find(union_id) == claims_index.end(), err::NOT_REPEAT_RECEIVE, "already claimed");
-
     // 7. 计算应领取数量
+    CHECKC(redpack.remaining_count > 0, err::INSUFFICIENT_QUANTITY, "no redpack left");
+    CHECKC(redpack.remaining_quant.amount > 0, err::INSUFFICIENT_QUANTITY, "no quantity left");
     asset assigned_quant;
     if (redpack.assign_type == redpack_type::RANDOM) {
         _assign_redpack(redpack, assigned_quant);
