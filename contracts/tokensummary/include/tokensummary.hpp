@@ -38,7 +38,7 @@ public:
     }
 
     ~token_summary() {
-        _global.set(_gstate, get_self());
+        // _global.set(_gstate, get_self());
     }
 
 

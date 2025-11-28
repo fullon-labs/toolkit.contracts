@@ -16,10 +16,10 @@ mcli set account permission $tokensummary_con active --add-code
 
 
 
-mpush $tokensummary_con view '["flonian"]' -p $tokensummary_con
+mpush tokensummary view '["flonian"]' -p flonian
 
 
-mpush $tokensummary_con view '["flonian"]' --read -j
+mpush tokensummary view '["flonian"]' --read -j
 
 
 
@@ -39,7 +39,7 @@ mpush $tokensummary_con addtoken '["flon.mtoken","8,STT"]'  -p $tokensummary_con
 mpush $tokensummary_con addtoken '["flon.mtoken","8,GAMO"]' -p $tokensummary_con
 
 
-
+mpush $tokensummary_con deltoken '["flon.mtoken","8,GAMO"]' -p $tokensummary_con
 
 #  tx=$(mcli push action -djs ts.ps1 view '["flonian"]' --read --return-packed)
 #  curl -X POST --url https://t.flonscan.io/v1/chain/send_read_only_transaction -d "{\"transaction\": $tx}" | jq .
