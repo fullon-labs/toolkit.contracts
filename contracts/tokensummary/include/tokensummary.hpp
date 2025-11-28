@@ -45,6 +45,7 @@ public:
     ACTION init( const name& admin ) {
         require_auth( _self );
         _gstate.admin = admin;
+        _global.set(_gstate, get_self());
     }
 
     ACTION addtoken(const name& bank, const symbol& sym);
