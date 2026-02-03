@@ -19,7 +19,7 @@ mcli set account permission $tokensummary_con active --add-code
 mpush tokensummary view '["flonian"]' -p flonian
 
 
-mpush tokensummary view '["flonian"]' --read -j
+mpush tokensummary view '["testtest"]' --read -j
 
 
 
