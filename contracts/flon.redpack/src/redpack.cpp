@@ -70,6 +70,17 @@ void redpack::on_tychetoken_transfer( const name& from, const name& to, const as
     _token_transfer( from, to, quantity, memo );
 }
 
+void redpack::on_singtoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo)
+{
+    _token_transfer( from, to, quantity, memo );
+}
+
+void redpack::on_cisumtoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo)
+{
+    _token_transfer( from, to, quantity, memo );
+}
+
+
 // deposit redpack memo format: [ wrap:$code:$type:$did_required:$count:$password_hash ]
 // fee payment memo format: [ fee:$code:$fee_type ]
 void redpack::_token_transfer(const name& from, const name& to, const asset& quantity, const string& memo)

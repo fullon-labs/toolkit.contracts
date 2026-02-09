@@ -87,6 +87,12 @@ public:
     [[eosio::on_notify("tyche.token::transfer")]]
     void on_tychetoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo );
 
+    [[eosio::on_notify("sing.token::transfer")]]
+    void on_singtoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo );
+
+    [[eosio::on_notify("cisum.token::transfer")]]
+    void on_cisumtoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo );
+
 
     ACTION claimredpack( const name& claimer, const name& code, const string& pwhash );
     ACTION cancel( const name& code );
