@@ -48,5 +48,4 @@ mpush flon.redpack   delclaims '[100]'  -p flon.redpack
 
 
 mpush flon.redpack listtoken '["sing.token", "8,SING"]' -p flonian
-
 mpush flon.redpack listtoken '["cisum.token", "4,CISUM"]' -p flonian
