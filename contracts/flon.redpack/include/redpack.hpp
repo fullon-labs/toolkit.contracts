@@ -4,6 +4,8 @@
 using namespace std;
 using namespace wasm::db;
 
+#define CONTRACT_VERSION "v1.0.0"
+
 #define CHECKC(exp, code, msg) \
    { if (!(exp)) eosio::check(false, string("[[") + to_string((int)code) + string("]] ") + msg); }
 
@@ -51,9 +53,11 @@ namespace redpack_status {
 
 class [[eosio::contract("flon.redpack")]] redpack: public eosio::contract {
 private:
-    dbc                 _db;
-    global_singleton    _global;
-    global_t            _gstate;
+    dbc                     _db;
+    global_singleton        _global;
+    global_t                _gstate;
+    globalidx_singleton     _globalidx;
+    globalidx_t             _gstateidx;
 
 public:
     using contract::contract;
@@ -61,9 +65,12 @@ public:
     redpack(eosio::name receiver, eosio::name code, datastream<const char*> ds):
         _db(_self),
         contract(receiver, code, ds),
-        _global(_self, _self.value)
+        _global(_self, _self.value),
+        _globalidx(_self, _self.value)
+
     {
         _gstate = _global.exists() ? _global.get() : global_t{};
+        _gstateidx = _globalidx.exists() ? _globalidx.get() : globalidx_t{};
     }
 
     ~redpack() {
@@ -79,13 +86,24 @@ public:
     [[eosio::on_notify("flon.mtoken::transfer")]]
     void on_mtoken_transfer(const name& from, const name& to, const asset& quantity, const string& memo );
 
-    [[eosio::on_notify("tyche.token::transfer")]] 
+    [[eosio::on_notify("tyche.token::transfer")]]
     void on_tychetoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo );
+
+    [[eosio::on_notify("sing.token::transfer")]]
+    void on_singtoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo );
+
+    [[eosio::on_notify("cisum.token::transfer")]]
+    void on_cisumtoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo );
 
 
     ACTION claimredpack( const name& claimer, const name& code, const string& pwhash );
     ACTION cancel( const name& code );
     ACTION delclaims( const uint64_t& max_rows );
+
+    ACTION setglobalidx(const uint64_t last_redpack_id,const uint64_t last_claim_id);
+
+    [[eosio::action, eosio::read_only]]
+    string version() const;
 
     ACTION init(const name& admin, const name& claim_admin,  const uint16_t& hours, const bool& did_supported, const uint64_t& did_id, const name& did_contract) {
         require_auth( _self );
@@ -108,5 +126,5 @@ private:
     uint64_t _rand(asset max_quantity,  uint16_t min_unit);
 
     void _handle_deposit(const name& from, const asset& quantity, const vector<string>& parts);
-    void _handle_fee_payment(const asset& fee_quant, const vector<string>& parts); 
+    void _handle_fee_payment(const asset& fee_quant, const vector<string>& parts);
 }; //contract redpack

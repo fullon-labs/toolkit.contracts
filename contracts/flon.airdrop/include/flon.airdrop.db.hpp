@@ -16,6 +16,7 @@ using std::string;
 using std::vector;
 using std::array;
 using std::set;
+using std::map;
 
 #define TBL struct [[eosio::table, eosio::contract("flon.airdrop")]]
 #define NTBL(name) struct [[eosio::table(name), eosio::contract("flon.airdrop")]]
@@ -32,32 +33,32 @@ struct [[eosio::table, eosio::contract("flon.airdrop")]] global_t {
 };
 typedef eosio::singleton<"global"_n, global_t> global_singleton;
 
-struct token_rule_t {
-  extended_asset total;   // 计划总额度（余额池）
-  extended_asset per;     // 单人领取额度（FIXED）
-
-  // ★ 必须：否则 newplan/claim 序列化会失败
-  EOSLIB_SERIALIZE(token_rule_t, (total)(per))
-};
-
 /* -----------------------------
  * 计划 Plan（计划级“一人一次”）
- * - claim_config: 每个元素为 [total_quota, per_user]（均为 extended_asset）
+ * - claim_config: 每个元素为 [single_claim,available]（均为 extended_asset）
  * ----------------------------- */
+
+
+struct claim_conf_s {
+    asset single_claim;        // 每用户可领
+    asset available;           // 剩余额度
+
+    EOSLIB_SERIALIZE(claim_conf_s, (single_claim)(available))
+};
+
 NTBL("plans") plan_t {
     uint64_t     id;
+    string       title;
     time_point   plan_started_at;                 // 开始时间
     time_point   plan_ended_at;                   // 结束时间
-    std::vector<token_rule_t> claim_config; // 每币配置：[总额度, 单人额度]
-    uint64_t     claimed_cnt = 0;                 // 已领取人数
+    map<extended_symbol, claim_conf_s> claims;    // 单次领取额度（固定）-> 可用额度（余额池）
+    uint64_t     claimed_cnt = 0;                 // 已领取人/次数
     time_point   created_at;
     time_point   updated_at;
 
     uint64_t primary_key() const { return id; }
 
-    EOSLIB_SERIALIZE(plan_t,
-        (id)(plan_started_at)(plan_ended_at)(claim_config)
-        (claimed_cnt)(created_at)(updated_at)
+    EOSLIB_SERIALIZE(plan_t, (id)(title)(plan_started_at)(plan_ended_at)(claims)(claimed_cnt)(created_at)(updated_at)
     )
 };
 typedef eosio::multi_index<"plans"_n, plan_t> plans_t;

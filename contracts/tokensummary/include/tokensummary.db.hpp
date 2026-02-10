@@ -2,12 +2,22 @@
 #include <eosio/asset.hpp>
 #include <eosio/name.hpp>
 #include <eosio/eosio.hpp>
+#include <eosio/singleton.hpp>
 
 #define TBL struct [[eosio::table, eosio::contract("tokensummary")]]
 #define NTBL(name) struct [[eosio::table(name), eosio::contract("tokensummary")]]
 
 using namespace eosio;
 using namespace std;
+
+/* -----------------------------
+ * Global 配置（singleton）
+ * ----------------------------- */
+struct [[eosio::table, eosio::contract("tokensummary")]] global_t {
+    name            admin = "flonian"_n;              // 管理员账户
+    EOSLIB_SERIALIZE(global_t, (admin))
+};
+typedef eosio::singleton<"global"_n, global_t> global_singleton;
 
 struct token_info {
     eosio::name code;     // 合约名

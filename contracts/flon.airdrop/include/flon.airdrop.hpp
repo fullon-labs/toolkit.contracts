@@ -81,26 +81,29 @@ public:
   ACTION deltoken(const name& token_bank, const symbol& sym);
 
   /* ===== 计划管理 ===== */
-  ACTION newplan(time_point started_at,
-                      time_point ended_at,
-                      const std::vector<token_rule_t>& claim_config_in);
+  ACTION addplan(const string& title,
+                      const time_point& started_at,
+                      const time_point& ended_at );
+  ACTION delplan( const uint64_t& plan_id);
 
   ACTION setplan(const uint64_t& plan_id,
+                      std::optional<string> title,
                       std::optional<time_point> started_at,
-                      std::optional<time_point> ended_at,
-                      std::optional<std::vector<token_rule_t>> claim_config_in
-                      );
+                      std::optional<time_point> ended_at);
+
+  ACTION setclaim(const uint64_t& plan_id, const extended_symbol& symb, const asset& single_claim, const asset& allocated);
+  ACTION delclaim(const uint64_t& plan_id, const extended_symbol& symb);
 
   /* ===== oracle 代领 ===== */
-  // memo 形如: "user:<account>"
-  ACTION claimairdrop(const uint64_t& plan_id,
+  ACTION claim(const uint64_t& plan_id,
                       const name&     claimer,
+                      const name&     beneficiary,
                       const string&   memo);
 
   /* ===== 入金路由（仅接收 tokens 白名单中的币） ===== */
   // memo: "add:<plan_id>"
-  [[eosio::on_notify("*::transfer")]]
-  void ontransfer(name from, name to, asset quantity, std::string memo);
+  // [[eosio::on_notify("*::transfer")]]
+  // void ontransfer(name from, name to, asset quantity, std::string memo);
 
 
   inline uint128_t bankcode_key(const name& bank, const symbol& sym) {

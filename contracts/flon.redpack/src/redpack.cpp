@@ -38,20 +38,20 @@ void redpack::delisttoken( const uint64_t& token_id ) {
 
 void redpack::listtoken(const name& contract, const symbol& sym ) {
     require_auth( _gstate.admin );
-    
+
     tokenlist_t::idx_t tokenlist_tbl(_self, _self.value);
     auto tokenlist_index = tokenlist_tbl.get_index<"by.consymb"_n>();
     uint128_t sec_index = get_unionid(contract, sym.raw());
     auto tokenlist_iter = tokenlist_index.find(sec_index);
     auto found          = tokenlist_iter != tokenlist_index.end();
     auto tid            = found ? tokenlist_iter->id : tokenlist_tbl.available_primary_key();
-    
+
     auto token          = tokenlist_t( tid );
     _db.get( token );
 
     token.token_contract    = contract;
     token.token_symbol      = sym;
-    
+
     _db.set(token, _self);
 }
 
@@ -65,10 +65,25 @@ void redpack::on_mtoken_transfer( const name& from, const name& to, const asset&
     _token_transfer( from, to, quantity, memo );
 }
 
-void redpack::on_tychetoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo) 
-{ 
-    _token_transfer( from, to, quantity, memo ); 
+void redpack::on_tychetoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo)
+{
+    _token_transfer( from, to, quantity, memo );
 }
+
+void redpack::on_singtoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo)
+{
+    _token_transfer( from, to, quantity, memo );
+}
+
+void redpack::on_cisumtoken_transfer( const name& from, const name& to, const asset& quantity, const string& memo)
+{
+    _token_transfer( from, to, quantity, memo );
+}
+
+string redpack::version() const {
+    return string(CONTRACT_VERSION);
+}
+
 
 // deposit redpack memo format: [ wrap:$code:$type:$did_required:$count:$password_hash ]
 // fee payment memo format: [ fee:$code:$fee_type ]
@@ -98,9 +113,9 @@ void redpack::_token_transfer(const name& from, const name& to, const asset& qua
 }
 
 // -------------------------- 内部方法分离 ------------------------------
-// memo format: [ wrap:$code:$type:$did_required:$count:$password_hash ]
+// memo format: [ wrap:$code:$type:$did_required:$count:$password_hash:$cover_code ]
 void redpack::_handle_deposit(const name& from, const asset& quantity, const vector<string>& parts) {
-    CHECKC(parts.size() >= 6, err::INVALID_FORMAT, "invalid wrap memo format");
+    CHECKC(parts.size() >= 7, err::INVALID_FORMAT, "invalid wrap memo format");
 
     auto token_contract = get_first_receiver();
     print_f("🧾 deposit from: %, quantity: %, memo_parts: %\n", from, quantity, parts.size());
@@ -127,7 +142,7 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
     // parts[3]: did_required
     bool did_required = (stoi(parts[3]) == 1);
     print_f("🔐 did_required: %\n", did_required);
-    
+
     // parts[4]: count
     int count = stoi(parts[4]);
     CHECKC(count > 0, err::NOT_POSITIVE, "redpack count must be positive");
@@ -135,6 +150,9 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
 
     // parts[5]: password_hash
     string passwd_hash = parts[5];
+
+    // parts[6]: cover_code
+    auto cover_code = name(parts[6]);
 
     auto symb = quantity.symbol.code().to_string();
     CHECKC(quantity.amount / count >= 100, err::INSUFFICIENT_QUANTITY, "Minimal unit 100 " + symb + " required");
@@ -144,14 +162,20 @@ void redpack::_handle_deposit(const name& from, const asset& quantity, const vec
                err::DID_PACK_SYMBOL_ERR, "DID redpack tokens can only be FLON|MUSDT|MUSDC|TYCHE");
     }
 
+    auto globalidx = _globalidx.get_or_default();
+    globalidx.last_redpack_id += 1;
+    _globalidx.set(globalidx, _self);
+    uint64_t new_redpack_id = globalidx.last_redpack_id;
     // 保存红包信息
     redpack_t::idx_t redpacks(_self, _self.value);
     auto now = current_time_point();
     redpacks.emplace(_self, [&](auto& row) {
+        row.redpack_id      = new_redpack_id;
         row.code            = code;
         row.assign_type     = rp_type;
         row.creator         = from;
         row.passwd_hash     = passwd_hash;
+        row.cover_code      = cover_code;
         row.token_contract  = token_contract;
         row.total_quant     = quantity;
         row.total_count     = count;
@@ -172,14 +196,12 @@ void redpack::_handle_fee_payment(const asset& fee_quant, const vector<string>& 
     CHECKC( _gstate.unwrap_unit_fee.amount > 0, err::FEE_NOT_REQUIRED, "zero fee charged" )
     CHECKC( _gstate.unwrap_fee_required, err::FEE_NOT_REQUIRED, "fee not required" )
     CHECKC( fee_quant.symbol == SYS_SYMBOL, err::SYMBOL_MISMATCH, "Only FLON fees are accepted" )
-    
-    name code = name(parts[0]);
-    redpack_t redpack(code);
-    CHECKC( redpack.unwrapped_by_admin, err::ACCOUNT_INVALID, "" )
 
+    name code = name(parts[1]);
+    redpack_t redpack(code);
     CHECKC( _db.get(redpack), err::REDPACK_EXIST, "redpack not yet created" )
-    
-    
+    CHECKC( redpack.unwrapped_by_admin, err::ACCOUNT_INVALID, "this redpack does not require admin unwrap" );
+
     auto fee_required = redpack.total_count * _gstate.unwrap_unit_fee;
     CHECKC( fee_quant.amount >= fee_required.amount, err::FEE_NOT_POSITIVE, "insufficient fee: " + fee_required.to_string() )
 
@@ -206,10 +228,16 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     // 3. 校验口令哈希
     CHECKC(redpack.passwd_hash == pwhash, err::PWHASH_INVALID, "incorrect password");
 
-    // 4. 校验红包状态
+    // 4. 防止重复领取（索引: claimer + code）
+    claim_t::idx_t claims(_self, _self.value);
+    auto claims_index = claims.get_index<"by.unionid"_n>();
+    uint128_t union_id = get_unionid(claimer, code.value);
+    CHECKC(claims_index.find(union_id) == claims_index.end(), err::NOT_REPEAT_RECEIVE, "already claimed");
+
+    // 5. 校验红包状态
     CHECKC(redpack.status == redpack_status::SERVICING, err::EXPIRED, "redpack not available for claiming");
 
-    // 5. DID 红包校验
+    // 6. DID 红包校验
     if (redpack.did_required) {
         const auto& required_dids = _gstate.dids; // set<uint64_t>
         CHECKC(!required_dids.empty(), err::DID_NOT_SUPPORTED, "DID not supported");
@@ -231,13 +259,9 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
         CHECKC(matched, err::DID_NOT_AUTH, "DID not authorized");
     }
 
-    // 6. 防止重复领取（索引: claimer + code）
-    claim_t::idx_t claims(_self, _self.value);
-    auto claims_index = claims.get_index<"by.unionid"_n>();
-    uint128_t union_id = get_unionid(claimer, code.value);
-    CHECKC(claims_index.find(union_id) == claims_index.end(), err::NOT_REPEAT_RECEIVE, "already claimed");
-
     // 7. 计算应领取数量
+    CHECKC(redpack.remaining_count > 0, err::INSUFFICIENT_QUANTITY, "no redpack left");
+    CHECKC(redpack.remaining_quant.amount > 0, err::INSUFFICIENT_QUANTITY, "no quantity left");
     asset assigned_quant;
     if (redpack.assign_type == redpack_type::RANDOM) {
         _assign_redpack(redpack, assigned_quant);
@@ -254,7 +278,7 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     CHECKC(redpack.remaining_count > 0, err::INSUFFICIENT_QUANTITY, "no redpack left");
 
     // 9. 发放红包（合约转账）
-    TRANSFER_OUT(redpack.token_contract, claimer, assigned_quant, "redpack: " + code.to_string());
+    TRANSFER_OUT(redpack.token_contract, claimer, assigned_quant, "claim:"+redpack.creator.to_string()+":"+ code.to_string()+":"+std::to_string(redpack.redpack_id)  );
 
     // 10. 更新红包主表
     redpack.remaining_quant -= assigned_quant;
@@ -266,8 +290,13 @@ void redpack::claimredpack(const name& claimer, const name& code, const string& 
     _db.set(redpack, _self);
 
     // 11. 保存领取记录
+    auto globalidx = _globalidx.get_or_default();
+    globalidx.last_claim_id += 1;
+    _globalidx.set(globalidx, _self);
+    uint64_t new_claim_id = globalidx.last_claim_id;
     claims.emplace(_self, [&](auto& row) {
-        row.id              = claims.available_primary_key();
+        row.id              = new_claim_id;
+        row.redpack_id      = redpack.redpack_id;
         row.redpack_code    = code;
         row.redpack_creator = redpack.creator;
         row.claimer         = claimer;
@@ -294,7 +323,8 @@ void redpack::cancel(const name& code)
             redpack.token_contract,
             redpack.creator,
             redpack.remaining_quant,
-            string("redpack remaining returned"));
+            "returned:"+redpack.creator.to_string()+":"+ code.to_string()+":"+std::to_string(redpack.redpack_id)
+            );
     }
 
     _db.del(redpack);
@@ -377,4 +407,27 @@ uint64_t redpack::_rand(asset max_quantity, uint16_t min_unit) {
 
     // 6. 返回最终随机金额
     return rand_units * min_unit_value;
+}
+
+
+void redpack::setglobalidx(const uint64_t last_redpack_id,const uint64_t last_claim_id)
+{
+    require_auth(get_self());   // 只允许合约自己或管理员修改
+
+    globalidx_singleton globalidx_s(get_self(), get_self().value);
+
+    auto g = globalidx_s.get_or_default();
+
+    // 只有传入的值非 0 才更新（你可根据需要调整逻辑）
+    if (last_redpack_id > 0) {
+        g.last_redpack_id = last_redpack_id;
+    }
+    if (last_claim_id > 0) {
+        g.last_claim_id = last_claim_id;
+    }
+
+    globalidx_s.set(g, get_self());
+
+    print_f("✔ globalidx updated: last_redpack_id=% , last_claim_id=%\n",
+            g.last_redpack_id, g.last_claim_id);
 }
