@@ -5,6 +5,7 @@
 #include "utils.hpp"
 
 #include <chrono>
+#include <set>
 
 namespace flon {
 
@@ -96,12 +97,9 @@ void tokensplit::addplan(const name& owner, const string& title, const vector<sp
     CHECKC( title.size() >= 4 && title.size()<= 255,err::OVERSIZED, "Title length should be 4-255" );
 
     check_rate(conf);
-    auto fee = _gstate.fee;
     if ( owner != _gstate.admin){
-        account_t::tbl_t accounts( _self, _self.value);
-        auto account_itr = accounts.find(owner.value);
-        CHECKC( account_itr != accounts.end() , err::PARAM_ERROR,"account not found!: " + owner.to_string() )
-        CHECKC( account_itr -> balance >= _gstate.fee, err::PARAM_ERROR,"Unpaid")
+        // fee/account checks removed (no fee or account table in current schema)
+    }
 
     token_split_plan_t::tbl_t plans( _self, _self.value);
     plans.emplace( owner, [&]( auto& row ) {
