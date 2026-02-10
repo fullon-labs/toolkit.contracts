@@ -80,6 +80,10 @@ void redpack::on_cisumtoken_transfer( const name& from, const name& to, const as
     _token_transfer( from, to, quantity, memo );
 }
 
+string redpack::version() const {
+    return string(CONTRACT_VERSION);
+}
+
 
 // deposit redpack memo format: [ wrap:$code:$type:$did_required:$count:$password_hash ]
 // fee payment memo format: [ fee:$code:$fee_type ]

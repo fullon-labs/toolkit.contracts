@@ -30,7 +30,7 @@ mpush $con claimredpack '["usertes4", "code1123", "abcd1234"]' -p $admin
 
 mpush flon.token transfer '["gahbnbehaskk", "flon.redpack", "1.00000000 FLON", "awrap:jqembth2gttd:random:0:2:30f9d7a87aa168fa38fe921288864cd542e2118fe8a2417f1ec5b86a8807f2a1"]' -p gahbnbehaskk
 
-mpush sing.token transfer '["gahbnbehaskk", "flon.redpack", "1.00000000 SING", "awrap:jqembth2gttc:random:0:2:30f9d7a87aa168fa38fe921288864cd542e2118fe8a2417f1ec5b86a8807f2a1:dddd"]' -p gahbnbehaskk
+mpush cisum.token transfer '["flonian", "flon.redpack", "1.0000 CISUM", "awrap:jqembth2gtte:random:0:2:30f9d7a87aa158fa38fe921288864cd542e2118fe8a2417f1ec5b86a8807f2a1:dddd"]' -p flonian
 
 
 

@@ -4,6 +4,8 @@
 using namespace std;
 using namespace wasm::db;
 
+#define CONTRACT_VERSION "v1.0.0"
+
 #define CHECKC(exp, code, msg) \
    { if (!(exp)) eosio::check(false, string("[[") + to_string((int)code) + string("]] ") + msg); }
 
@@ -99,6 +101,9 @@ public:
     ACTION delclaims( const uint64_t& max_rows );
 
     ACTION setglobalidx(const uint64_t last_redpack_id,const uint64_t last_claim_id);
+
+    [[eosio::action, eosio::read_only]]
+    string version() const;
 
     ACTION init(const name& admin, const name& claim_admin,  const uint16_t& hours, const bool& did_supported, const uint64_t& did_id, const name& did_contract) {
         require_auth( _self );
