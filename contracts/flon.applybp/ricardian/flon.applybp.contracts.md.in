@@ -1,0 +1,49 @@
+<h1 class="contract">init</h1>
+
+---
+spec_version: "0.2.0"
+title: Initialize BP Application Contract
+summary: 'Initialize the admin account for flon.applybp'
+---
+
+{{$action.account}} initializes the block producer application contract admin as {{admin}}.
+
+<h1 class="contract">applybp</h1>
+
+---
+spec_version: "0.2.0"
+title: Apply as Block Producer
+summary: '{{owner}} submits a block producer application'
+---
+
+{{owner}} submits block producer application information.
+
+<h1 class="contract">updatebp</h1>
+
+---
+spec_version: "0.2.0"
+title: Update Block Producer Application
+summary: '{{owner}} updates a block producer application'
+---
+
+{{owner}} updates existing block producer application information.
+
+<h1 class="contract">addproducer</h1>
+
+---
+spec_version: "0.2.0"
+title: Add Block Producer Application
+summary: '{{submiter}} adds or updates producer information for {{owner}}'
+---
+
+{{submiter}} adds or updates block producer application information for {{owner}}.
+
+<h1 class="contract">setstatus</h1>
+
+---
+spec_version: "0.2.0"
+title: Set Producer Application Status
+summary: '{{submiter}} sets {{owner}} status to {{status}}'
+---
+
+{{submiter}} sets the block producer application status for {{owner}}.

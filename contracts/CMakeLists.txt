@@ -58,6 +58,7 @@ add_subdirectory(flon.creator)
 add_subdirectory(tokensummary)
 add_subdirectory(flon.airdrop)
 add_subdirectory(flon.split)
+add_subdirectory(flon.applybp)
 
 if(BUILD_TESTS)
   add_subdirectory(test_contracts)
