@@ -18,27 +18,11 @@ static constexpr eosio::name active_permission{"active"_n};
                 .send(                                             \
                     get_self(), to, quantity, memo);
 
-static name to_vest_plan_status(uint8_t status) {
-    switch (status) {
-        case PLAN_UNPAID_FEE: return plan_status::PENDING;
-        case PLAN_ENABLED: return plan_status::ENABLED;
-        case PLAN_DISABLED: return plan_status::DISABLED;
-        default: return name{};
-    }
-}
-
-static name to_vest_issue_status(uint8_t status) {
-    switch (status) {
-        case ISSUE_NORMAL: return issue_status::ONGOING;
-        case ISSUE_ENDED: return issue_status::FINISHED;
-        default: return name{};
-    }
-}
-
-void vest::init(const name& admin, const asset &plan_fee, const name &fee_receiver) {
+void vest::init(const name& admin, const asset& plan_fee, const name& fee_receiver) {
     require_auth( _self );
     CHECKC( is_account(admin),       err::ACCOUNT_INVALID,      "admin account does not exist" )
     CHECKC( is_account(fee_receiver),err::ACCOUNT_INVALID,      "fee_receiver account does not exist" )
+    
     _global.set(global_t{admin, fee_receiver, plan_fee}, _self);
 }
 

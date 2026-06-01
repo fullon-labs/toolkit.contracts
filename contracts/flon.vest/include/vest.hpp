@@ -18,7 +18,7 @@ public:
         _gstate = _global.exists() ? _global.get() : global_t{};
     }
 
-    ACTION init(const name& admin, const asset &plan_fee, const name &fee_receiver);
+    ACTION init(const name& admin, const asset& plan_fee, const name& fee_receiver);
 
     ACTION setreceiver(const uint64_t& issue_id, const name& receiver);
     ACTION addplan(const name& owner, const string& title, const name& asset_contract, const symbol& asset_symbol, const uint64_t& unlock_interval_days, const int64_t& unlock_times);
