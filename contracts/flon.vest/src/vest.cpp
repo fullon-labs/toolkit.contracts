@@ -69,7 +69,7 @@ void vest::addplan(const name& owner,
         plan.total_issued = asset(0, asset_symbol);
         plan.total_unlocked = asset(0, asset_symbol);
         plan.total_refunded = asset(0, asset_symbol);
-        plan.status =  _gstate.plan_fee.amount != 0 ? PLAN_PENDING : PLAN_ENABLED;
+        plan.status =  _gstate.plan_fee.amount != 0 ? plan_status::PENDING : plan_status::ENABLED;
         plan.created_at = current_time_point();
         plan.updated_at = plan.created_at;
     });
@@ -112,8 +112,8 @@ void vest::enableplan(const name& owner, const uint64_t& plan_id, bool enabled) 
     auto plan_itr = plan_tbl.find(plan_id);
     CHECK( plan_itr != plan_tbl.end(), "plan not found: " + to_string(plan_id) )
     CHECK( owner == plan_itr->owner, "owner mismatch" )
-    CHECK( plan_itr->status != PLAN_PENDING, "plan fees unpaid" )
-    name new_status = enabled ? PLAN_ENABLED : PLAN_DISABLED;
+    CHECK( plan_itr->status != plan_status::PENDING, "plan fees unpaid" )
+    name new_status = enabled ? plan_status::ENABLED : plan_status::DISABLED;
     CHECK( plan_itr->status != new_status, "plan status is no changed" )
 
     plan_tbl.modify( plan_itr, same_payer, [&]( auto& plan ) {
@@ -159,9 +159,9 @@ void vest::ontransfer(name from, name to, asset quantity, string memo) {
         vest_plan_t::tbl_t plan_tbl(get_self(), get_self().value);
         auto plan_itr = plan_tbl.find(plan_id);
         CHECK( plan_itr != plan_tbl.end(), "plan not found by plan_id: " + to_string(plan_id) )
-        CHECK( plan_itr->status == PLAN_PENDING, "plan fees not paid" )
+        CHECK( plan_itr->status == plan_status::PENDING, "plan fees not paid" )
         plan_tbl.modify( plan_itr, same_payer, [&]( auto& plan ) {
-            plan.status = PLAN_ENABLED;
+            plan.status = plan_status::ENABLED;
             plan.updated_at = current_time_point();
         });
 
@@ -176,7 +176,7 @@ void vest::ontransfer(name from, name to, asset quantity, string memo) {
         vest_plan_t::tbl_t plan_tbl(get_self(), get_self().value);
         auto plan_itr = plan_tbl.find(plan_id);
         CHECK( plan_itr != plan_tbl.end(), "plan not found: " + to_string(plan_id) )
-        CHECK( plan_itr->status == PLAN_ENABLED, "plan not enabled, status:" + plan_itr->status.to_string() )
+        CHECK( plan_itr->status == plan_status::ENABLED, "plan not enabled, status:" + plan_itr->status.to_string() )
 
         CHECK( is_account(receiver), "receiver account not exist" );
         CHECK( first_unlock_days <= MAX_LOCK_DAYS,
@@ -208,7 +208,7 @@ void vest::ontransfer(name from, name to, asset quantity, string memo) {
             issue.unlocked  = asset(0, quantity.symbol);
             issue.unlock_interval_days = plan_itr->unlock_interval_days;
             issue.unlock_times = plan_itr->unlock_times;
-            issue.status    = ISSUE_ONGOING;
+            issue.status    = issue_status::ONGOING;
             issue.issued_at = now;
             issue.updated_at = now;
             issue.memo      = memo;
@@ -229,7 +229,7 @@ void vest::transissue(const name& old_receiver, const name& new_receiver, const 
     vest_issue_t::tbl_t issue_tbl(get_self(), get_self().value);
     auto issue_itr = issue_tbl.find(issue_id);
     CHECK( issue_itr != issue_tbl.end(), "issue not found: " + to_string(issue_id) )
-    CHECK( issue_itr->status == ISSUE_ONGOING, "issue abnormal, status: " + issue_itr->status.to_string() )
+    CHECK( issue_itr->status == issue_status::ONGOING, "issue abnormal, status: " + issue_itr->status.to_string() )
     CHECK( issue_itr->receiver == old_receiver, "old_receiver mismatch" )
     CHECK( issue_itr->locked.symbol == quant_to_transfer.symbol, "quant_to_transfer symbol mismatch" )
     CHECK( issue_itr->locked.amount >= quant_to_transfer.amount, "locked amount insufficient" )
@@ -238,28 +238,21 @@ void vest::transissue(const name& old_receiver, const name& new_receiver, const 
     auto now = current_time_point();
     auto new_issue_id = issue_tbl.available_primary_key();
     if (new_issue_id == 0) new_issue_id = 1;
-    string transfer_memo = "transfer:" + old_receiver.to_string() + ":" + to_string(issue_id);
-    auto old_plan_id = issue_itr->plan_id;
-    auto old_issuer = issue_itr->issuer;
-    auto old_first_unlock_days = issue_itr->first_unlock_days;
-    auto old_unlock_interval_days = issue_itr->unlock_interval_days;
-    auto old_unlock_times = issue_itr->unlock_times;
-    auto old_status = issue_itr->status;
-    auto old_issued_at = issue_itr->issued_at;
+    string transfer_memo = old_receiver.to_string() + ":" + to_string(issue_id);
 
     issue_tbl.emplace( _self, [&]( auto& issue ) {
         issue.issue_id             = new_issue_id;
-        issue.plan_id              = old_plan_id;
-        issue.issuer               = old_issuer;
+        issue.plan_id              = issue_itr->plan_id;
+        issue.issuer               = issue_itr->issuer;
         issue.receiver             = new_receiver;
         issue.issued               = quant_to_transfer;
         issue.locked               = quant_to_transfer;
         issue.unlocked             = asset(0, quant_to_transfer.symbol);
-        issue.first_unlock_days    = old_first_unlock_days;
-        issue.unlock_interval_days = old_unlock_interval_days;
-        issue.unlock_times         = old_unlock_times;
-        issue.status               = old_status;
-        issue.issued_at            = old_issued_at;
+        issue.first_unlock_days    = issue_itr->first_unlock_days;
+        issue.unlock_interval_days = issue_itr->unlock_interval_days;
+        issue.unlock_times         = issue_itr->unlock_times;
+        issue.status               = issue_itr->status;
+        issue.issued_at            = issue_itr->issued_at;
         issue.updated_at           = now;
         issue.memo                 = transfer_memo;
     });
@@ -284,13 +277,13 @@ void vest::endissue(const uint64_t& plan_id, const name& issuer, const uint64_t&
     CHECK( issue_itr != issue_tbl.end(), "issue not found: " + to_string(issue_id) )
     CHECK( issue_itr->plan_id == plan_id, "plan id mismatch" )
 
-    CHECK( issue_itr->status != ISSUE_FINISHED, "issue already finished, status: " + issue_itr->status.to_string() )
+    CHECK( issue_itr->status != issue_status::FINISHED, "issue already finished, status: " + issue_itr->status.to_string() )
     CHECK( issuer == issue_itr->issuer || issuer == _self, "not authorized" )
 
     vest_plan_t::tbl_t plan_tbl(get_self(), get_self().value);
     auto plan_itr = plan_tbl.find(plan_id);
     CHECK( plan_itr != plan_tbl.end(), "plan not found: " + to_string(plan_id) )
-    CHECK( plan_itr->status == PLAN_ENABLED, "plan not enabled, status:" + plan_itr->status.to_string() )
+    CHECK( plan_itr->status == plan_status::ENABLED, "plan not enabled, status:" + plan_itr->status.to_string() )
 
     auto to_refund = issue_itr->locked;
     TRANSFER_OUT( plan_itr->asset_contract, issue_itr->issuer, to_refund, string("refund: " + to_string(issue_id)) )
@@ -303,7 +296,7 @@ void vest::endissue(const uint64_t& plan_id, const name& issuer, const uint64_t&
     });
 
     issue_tbl.modify( issue_itr, same_payer, [&]( auto& issue ) {
-        issue.status            = ISSUE_FINISHED;
+        issue.status            = issue_status::FINISHED;
         issue.updated_at        = now;
     });
 }
@@ -324,7 +317,7 @@ void vest::unlock(const name& issuer, const uint64_t& plan_id, const uint64_t& i
     vest_plan_t::tbl_t plan_tbl(get_self(), get_self().value);
     auto plan_itr = plan_tbl.find(plan_id);
     CHECK( plan_itr != plan_tbl.end(), "plan not found: " + to_string(plan_id) )
-    CHECK( plan_itr->status == PLAN_ENABLED, "plan not enabled, status:" + plan_itr->status.to_string() )
+    CHECK( plan_itr->status == plan_status::ENABLED, "plan not enabled, status:" + plan_itr->status.to_string() )
     ASSERT( plan_itr->unlock_times > 0 && plan_itr->unlock_interval_days > 0 );
 
     auto issued_days = (now.sec_since_epoch() - issue_itr->issued_at.sec_since_epoch()) / DAY_SECONDS;
@@ -332,7 +325,7 @@ void vest::unlock(const name& issuer, const uint64_t& plan_id, const uint64_t& i
     int64_t total_unlocked = 0;   // already_unlocked + to_be_unlocked
     int64_t remaining_locked = issue_itr->locked.amount;
 
-    CHECK( issue_itr->status == ISSUE_ONGOING, "issue abnormal, status: " + issue_itr->status.to_string() )
+    CHECK( issue_itr->status == issue_status::ONGOING, "issue abnormal, status: " + issue_itr->status.to_string() )
     CHECK( unlocked_days >= 0, "premature to unlock by n days, n = " + to_string( -1 * unlocked_days ) )
 
     auto unlocked_times = 1 + std::min( unlocked_days / plan_itr->unlock_interval_days, plan_itr->unlock_times );
@@ -363,7 +356,7 @@ void vest::unlock(const name& issuer, const uint64_t& plan_id, const uint64_t& i
         issue.unlocked.amount   = total_unlocked;
         issue.locked.amount     = remaining_locked;
         if( issue.unlocked == issue.issued )
-            issue.status        = ISSUE_FINISHED; //pending one to purge finished issue records
+            issue.status        = issue_status::FINISHED; //pending one to purge finished issue records
         issue.updated_at        = now;
     });
 }
@@ -374,7 +367,7 @@ void vest::delfinissues(const vector<uint64_t>& issue_ids) {
     for( auto& issue_id : issue_ids ) {
         auto issue_itr = issue_tbl.find(issue_id);
         CHECK( issue_itr != issue_tbl.end(), "issue not found: " + to_string(issue_id) )
-        CHECK( issue_itr->status == ISSUE_FINISHED, "issue not finished" )
+        CHECK( issue_itr->status == issue_status::FINISHED, "issue not finished" )
 
         issue_tbl.erase( issue_itr );
     }

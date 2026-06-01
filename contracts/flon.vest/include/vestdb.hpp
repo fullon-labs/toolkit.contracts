@@ -72,9 +72,11 @@ struct VEST_TBL_NAME("global") global_t {
 typedef eosio::singleton< "global"_n, global_t > global_singleton;
 
 
-static constexpr eosio::name PLAN_PENDING       = "pending"_n;
-static constexpr eosio::name PLAN_ENABLED       = "enabled"_n;
-static constexpr eosio::name PLAN_DISABLED      = "disabled"_n;
+namespace plan_status {
+    static constexpr eosio::name PENDING        = "pending"_n;
+    static constexpr eosio::name ENABLED        = "enabled"_n;
+    static constexpr eosio::name DISABLED       = "disabled"_n;
+};
 
 struct VEST_TBL_NAME("vestplans") vest_plan_t { //scope: _self
     uint64_t        id;                         //PK, auto-increment
@@ -87,7 +89,7 @@ struct VEST_TBL_NAME("vestplans") vest_plan_t { //scope: _self
     asset           total_issued;
     asset           total_unlocked;
     asset           total_refunded;
-    name            status;
+    name            status = plan_status::ENABLED;
     time_point      created_at;
     time_point      updated_at;
 
@@ -103,23 +105,25 @@ struct VEST_TBL_NAME("vestplans") vest_plan_t { //scope: _self
                                    (total_issued)(total_unlocked)(total_refunded)(status)(created_at)(updated_at) )
 };
 
-static constexpr eosio::name ISSUE_ONGOING      = "ongoing"_n;
-static constexpr eosio::name ISSUE_TERMINATED   = "terminated"_n;
-static constexpr eosio::name ISSUE_FINISHED     = "finished"_n;
+namespace issue_status {
+    static constexpr eosio::name ONGOING        = "ongoing"_n;
+    static constexpr eosio::name TERMINATED     = "terminated"_n;
+    static constexpr eosio::name FINISHED       = "finished"_n;
+};
 
 
 struct VEST_TBL_NAME("vestissues") vest_issue_t {   //scope: _self
-    uint64_t      issue_id;                         // PK, auto-increment
-    uint64_t      plan_id;
+    uint64_t      issue_id = 0;                     // PK, auto-increment
+    uint64_t      plan_id = 0;
     name          issuer;
     name          receiver;
     asset         issued;
     asset         locked;
     asset         unlocked;
-    uint64_t      first_unlock_days;
+    uint64_t      first_unlock_days = 0;
     uint64_t      unlock_interval_days;
     uint64_t      unlock_times;
-    name          status;
+    name          status = issue_status::ONGOING;
     time_point    issued_at;
     time_point    updated_at;
     string        memo;
