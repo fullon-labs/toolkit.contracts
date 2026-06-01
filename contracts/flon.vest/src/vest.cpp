@@ -219,10 +219,10 @@ void vest::ontransfer(name from, name to, asset quantity, string memo) {
     }
 }
 
-void vest::transissue(const name& old_receiver, const name& new_receiver, const uint64_t& issue_id, const asset& quant_to_transfer) {
-    require_auth(old_receiver);
-    CHECK( is_account(new_receiver), "new_receiver account not exist" )
-    CHECK( old_receiver != new_receiver, "new_receiver must be different from old_receiver" )
+void vest::transissue(const name& from_receiver, const name& to_receiver, const uint64_t& issue_id, const asset& quant_to_transfer) {
+    require_auth(from_receiver);
+    CHECK( is_account(to_receiver), "to_receiver account not exist" )
+    CHECK( from_receiver != to_receiver, "to_receiver must be different from from_receiver" )
     CHECK( quant_to_transfer.is_valid(), "invalid quant_to_transfer" )
     CHECK( quant_to_transfer.amount > 0, "quant_to_transfer must be positive" )
 
@@ -230,7 +230,7 @@ void vest::transissue(const name& old_receiver, const name& new_receiver, const 
     auto issue_itr = issue_tbl.find(issue_id);
     CHECK( issue_itr != issue_tbl.end(), "issue not found: " + to_string(issue_id) )
     CHECK( issue_itr->status == issue_status::ONGOING, "issue abnormal, status: " + issue_itr->status.to_string() )
-    CHECK( issue_itr->receiver == old_receiver, "old_receiver mismatch" )
+    CHECK( issue_itr->receiver == from_receiver, "from_receiver mismatch" )
     CHECK( issue_itr->locked.symbol == quant_to_transfer.symbol, "quant_to_transfer symbol mismatch" )
     CHECK( issue_itr->locked.amount >= quant_to_transfer.amount, "locked amount insufficient" )
     CHECK( issue_itr->issued.amount >= quant_to_transfer.amount, "issued amount insufficient" )
@@ -238,13 +238,13 @@ void vest::transissue(const name& old_receiver, const name& new_receiver, const 
     auto now = current_time_point();
     auto new_issue_id = issue_tbl.available_primary_key();
     if (new_issue_id == 0) new_issue_id = 1;
-    string transfer_memo = old_receiver.to_string() + ":" + to_string(issue_id);
+    string transfer_memo = from_receiver.to_string() + ":" + to_string(issue_id);
 
     issue_tbl.emplace( _self, [&]( auto& issue ) {
         issue.issue_id             = new_issue_id;
         issue.plan_id              = issue_itr->plan_id;
         issue.issuer               = issue_itr->issuer;
-        issue.receiver             = new_receiver;
+        issue.receiver             = to_receiver;
         issue.issued               = quant_to_transfer;
         issue.locked               = quant_to_transfer;
         issue.unlocked             = asset(0, quant_to_transfer.symbol);

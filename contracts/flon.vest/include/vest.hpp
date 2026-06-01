@@ -26,7 +26,7 @@ public:
     ACTION setfirstdays(const uint64_t& issue_id, const uint64_t& days);
     ACTION enableplan(const name& owner, const uint64_t& plan_id, bool enabled);
     ACTION delfinissues( const vector<uint64_t>& issue_ids );
-    ACTION transissue(const name& old_receiver, const name& new_receiver, const uint64_t& issue_id, const asset& quant_to_transfer);
+    ACTION transissue(const name& from_receiver, const name& to_receiver, const uint64_t& issue_id, const asset& quant_to_transfer);
 
     /**
      * ontransfer, trigger by recipient of transfer()
