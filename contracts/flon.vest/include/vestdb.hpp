@@ -45,6 +45,7 @@ static constexpr symbol SYS_SYMBOL              = SYMBOL("FLON", 8);
 static constexpr name SYS_BANK                  { "flon.token"_n };
 
 static constexpr uint64_t MAX_LOCK_DAYS         = 365 * 10;
+static constexpr uint32_t MAX_IMPORT_ROWS       = 50;
 
 #ifndef DAY_SECONDS_FOR_TEST
 static constexpr uint64_t DAY_SECONDS           = 24 * 60 * 60;
@@ -72,81 +73,77 @@ struct VEST_TBL_NAME("global") global_t {
 typedef eosio::singleton< "global"_n, global_t > global_singleton;
 
 
-enum plan_status_t {
-    PLAN_NONE          = 0,
-    PLAN_UNPAID_FEE    = 1,
-    PLAN_ENABLED       = 2,
-    PLAN_DISABLED      = 3
+namespace plan_status {
+    static constexpr eosio::name PENDING        = "pending"_n;
+    static constexpr eosio::name ENABLED        = "enabled"_n;
+    static constexpr eosio::name DISABLED       = "disabled"_n;
 };
 
-struct VEST_TBL plan_t {
-    uint64_t        id;
-    name            owner;                      //plan owner
-    string          title;                      //plan title: <=64 chars
-    name            asset_contract;             //asset issuing contract (ARC20)
-    symbol          asset_symbol;               //E.g. FLON | CNYD
-    uint64_t        unlock_interval_days;       //interval between two consecutive unlock timepoints
-    uint64_t        unlock_times;               //unlock times, duration=unlock_interval_days*unlock_times
-    asset           total_issued;               //stats: updated upon issue deposit
-    asset           total_unlocked;             //stats: updated upon unlock and endissue
-    asset           total_refunded;             //stats: updated upon and endissue
-    uint8_t         status = PLAN_UNPAID_FEE;   //status, see plan_status_t
-    time_point      created_at;                 //creation time (UTC time)
-    time_point      updated_at;                 //update time: last updated at
+struct VEST_TBL_NAME("vestplans") vest_plan_t { //scope: _self
+    uint64_t        id;                         //PK, auto-increment
+    name            owner;
+    string          title;
+    name            asset_contract;
+    symbol          asset_symbol;
+    uint64_t        unlock_interval_days;
+    uint64_t        unlock_times;
+    asset           total_issued;
+    asset           total_unlocked;
+    asset           total_refunded;
+    name            status = plan_status::ENABLED;
+    time_point      created_at;
+    time_point      updated_at;
 
     uint64_t primary_key() const { return id; }
 
     uint128_t by_owner() const { return (uint128_t)owner.value << 64 | (uint128_t)id; }
 
-    typedef eosio::multi_index<"plans"_n, plan_t,
-        indexed_by<"by.owneridx"_n,  const_mem_fun<plan_t, uint128_t, &plan_t::by_owner> >
+    typedef eosio::multi_index<"vestplans"_n, vest_plan_t,
+        indexed_by<"by.owneridx"_n,  const_mem_fun<vest_plan_t, uint128_t, &vest_plan_t::by_owner> >
     > tbl_t;
 
-    EOSLIB_SERIALIZE( plan_t, (id)(owner)(title)(asset_contract)(asset_symbol)(unlock_interval_days)(unlock_times)
-                              (total_issued)(total_unlocked)(total_refunded)(status)(created_at)(updated_at) )
-
+    EOSLIB_SERIALIZE( vest_plan_t, (id)(owner)(title)(asset_contract)(asset_symbol)(unlock_interval_days)(unlock_times)
+                                   (total_issued)(total_unlocked)(total_refunded)(status)(created_at)(updated_at) )
 };
 
-enum issue_status_t {
-    ISSUE_NONE          = 0,
-    // ISSUE_UNDEPOSITED   = 1,
-    ISSUE_NORMAL        = 2,
-    ISSUE_ENDED         = 3
+namespace issue_status {
+    static constexpr eosio::name ONGOING        = "ongoing"_n;
+    static constexpr eosio::name TERMINATED     = "terminated"_n;
+    static constexpr eosio::name FINISHED       = "finished"_n;
 };
 
-//scope: _self
-struct VEST_TBL issue_t {
-    // 
-    uint64_t      issue_id = 0;                 //PK, unique within the contract
-    uint64_t      plan_id = 0;                  //plan id
-    name          issuer;                       //issuer
-    name          receiver;                     //receiver of issue who can unlock
-    asset         issued;                       //originally issued amount
-    asset         locked;                       //currently locked amount
-    asset         unlocked;                     //currently unlocked amount
-    uint64_t      first_unlock_days = 0;        //unlock since issued_at
-    uint64_t      unlock_interval_days;         //interval between two consecutive unlock timepoints
-    uint64_t      unlock_times;                 //unlock times, duration=unlock_interval_days*unlock_times
-    uint8_t       status = ISSUE_NONE;          //status of issue, see issue_status_t
-    time_point    issued_at;                    //issue time (UTC time)
-    time_point    updated_at;                   //update time: last unlocked at
+
+struct VEST_TBL_NAME("vestissues") vest_issue_t {   //scope: _self
+    uint64_t      issue_id = 0;                     // PK, auto-increment
+    uint64_t      plan_id = 0;
+    name          issuer;
+    name          receiver;
+    asset         issued;
+    asset         locked;
+    asset         unlocked;
+    uint64_t      first_unlock_days = 0;
+    uint64_t      unlock_interval_days;
+    uint64_t      unlock_times;
+    name          status = issue_status::ONGOING;
+    time_point    issued_at;
+    time_point    updated_at;
+    string        memo;
 
     uint64_t primary_key() const { return issue_id; }
 
     uint128_t by_plan() const { return (uint128_t)plan_id << 64 | (uint128_t)issue_id; }
     uint128_t by_receiver_issue() const { return (uint128_t)receiver.value << 64 | (uint128_t)issue_id; }
     uint128_t by_planreceiver() const { return (uint128_t)plan_id << 64 | (uint128_t)receiver.value; }
-    // uint64_t by_receiver()const { return receiver.value; }
 
-    typedef eosio::multi_index<"issues"_n, issue_t,
-        indexed_by<"by.planidx"_n,      const_mem_fun<issue_t, uint128_t, &issue_t::by_plan>>,
-        indexed_by<"by.recveridx"_n,    const_mem_fun<issue_t, uint128_t, &issue_t::by_receiver_issue>>,
-        indexed_by<"by.planrcver"_n,    const_mem_fun<issue_t, uint128_t, &issue_t::by_planreceiver>>
+    typedef eosio::multi_index<"vestissues"_n, vest_issue_t,
+        indexed_by<"by.planidx"_n,      const_mem_fun<vest_issue_t, uint128_t, &vest_issue_t::by_plan>>,
+        indexed_by<"by.recveridx"_n,    const_mem_fun<vest_issue_t, uint128_t, &vest_issue_t::by_receiver_issue>>,
+        indexed_by<"by.planrcver"_n,    const_mem_fun<vest_issue_t, uint128_t, &vest_issue_t::by_planreceiver>>
     > tbl_t;
 
-    EOSLIB_SERIALIZE( issue_t,  (issue_id)(plan_id)(issuer)(receiver)(issued)(locked)(unlocked)
-                                (first_unlock_days)(unlock_interval_days)(unlock_times)
-                                (status)(issued_at)(updated_at) )
+    EOSLIB_SERIALIZE( vest_issue_t,  (issue_id)(plan_id)(issuer)(receiver)(issued)(locked)(unlocked)
+                                     (first_unlock_days)(unlock_interval_days)(unlock_times)
+                                     (status)(issued_at)(updated_at)(memo) )
 };
 //scope: _self
 struct VEST_TBL account {

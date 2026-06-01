@@ -25,7 +25,9 @@ public:
     ACTION setplanowner(const name& owner, const uint64_t& plan_id, const name& new_owner);
     ACTION setfirstdays(const uint64_t& issue_id, const uint64_t& days);
     ACTION enableplan(const name& owner, const uint64_t& plan_id, bool enabled);
-    ACTION delendissues( const vector<uint64_t>& issue_ids );
+    ACTION delfinissues( const vector<uint64_t>& issue_ids );
+    ACTION importvest();
+    ACTION transissue(const name& old_receiver, const name& new_receiver, const uint64_t& issue_id, const asset& quant_to_transfer);
 
     /**
      * ontransfer, trigger by recipient of transfer()

@@ -46,7 +46,7 @@ set(VOTING_ICON_URI "voting.png#db28cd3db6e62d4509af3644ce7d377329482a14bb4bfaca
 
 # add_subdirectory(flon.split)
 # add_subdirectory(flon.test)
-# add_subdirectory(flon.vest)
+add_subdirectory(flon.vest)
 # add_subdirectory(pubkey.token)
 # add_subdirectory(flon.faucet)
 # add_subdirectory(flon.creator)
