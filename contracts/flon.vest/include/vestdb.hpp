@@ -46,6 +46,12 @@ static constexpr name SYS_BANK                  { "flon.token"_n };
 
 static constexpr uint64_t MAX_LOCK_DAYS         = 365 * 10;
 
+/** DANGEROUS!!! DO NOT CHANGE the value of DAY_SECONDS_FOR_TEST unless you know exactly what you are doing, 
+ * and make sure to set it back to 0 or comment it out before deploying to production environment!!!
+ * 
+ * static constexpr uint64_t DAY_SECONDS_FOR_TEST  = 10; // for test, 1 day is 10 seconds, so that we can see the unlock process in a short time. DO NOT set this for production environment!!!
+ */ 
+
 #ifndef DAY_SECONDS_FOR_TEST
 static constexpr uint64_t DAY_SECONDS           = 24 * 60 * 60;
 #else
