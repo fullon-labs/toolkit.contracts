@@ -236,7 +236,7 @@ void flonsale::ontransfer(name from, name to, asset quantity, string memo) {
       ++counter.last_id;
       sequence.set(counter, get_self());
       orders_table orders(get_self(), get_self().value);
-      orders.emplace(from, [&](auto& row) {
+      orders.emplace(get_self(), [&](auto& row) {
          row = order{counter.last_id, from, pair, quantity, payout, asset{0, quantity.symbol}};
       });
       return;
