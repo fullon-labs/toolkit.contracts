@@ -88,20 +88,12 @@ private:
    using order_sequence_table = eosio::singleton<"orderseq"_n, order_sequence>;
 
 
-   // Standard token balance row, queried against the payout token contract.
-   struct [[eosio::table]] token_account {
-      eosio::asset balance;
-      uint64_t primary_key() const { return balance.symbol.code().raw(); }
-   };
-   using token_accounts = eosio::multi_index<"accounts"_n, token_account>;
-
    config_singleton _config;
    offers_table     _offers;
 
    config_row config();
    void require_admin();
    void require_initialized();
-   eosio::asset balance_of(const eosio::extended_symbol& token) const;
    void transfer_token(eosio::name token_contract, eosio::name to, eosio::asset quantity, const std::string& memo) const;
    void settle(offers_table::const_iterator offer_itr, eosio::name buyer,
                eosio::asset payment, eosio::asset payout);

@@ -101,12 +101,6 @@ void flonsale::setpaused(name pair, bool paused) {
    _offers.modify(itr, get_self(), [&](auto& row) { row.paused = paused; });
 }
 
-asset flonsale::balance_of(const extended_symbol& token) const {
-   token_accounts accounts(token.get_contract(), get_self().value);
-   const auto itr = accounts.find(token.get_symbol().code().raw());
-   return itr == accounts.end() ? asset{0, token.get_symbol()} : itr->balance;
-}
-
 void flonsale::transfer_token(name token_contract, name to, asset quantity, const string& memo) const {
    action(
       permission_level{get_self(), ACTIVE_PERMISSION},
@@ -127,7 +121,6 @@ void flonsale::withdrawinv(name pair, name to, asset quantity, string memo) {
          "quantity must be positive and use the payout symbol");
    const asset unsold = itr->funded - itr->sold;
    check(quantity <= unsold, "cannot withdraw sold or unfunded inventory");
-   check(balance_of(itr->payout_unit.get_extended_symbol()) >= quantity, "insufficient contract payout balance");
 
    _offers.modify(itr, get_self(), [&](auto& row) { row.funded -= quantity; });
    transfer_token(itr->payout_unit.contract, to, quantity, memo);
@@ -247,7 +240,6 @@ void flonsale::ontransfer(name from, name to, asset quantity, string memo) {
 void flonsale::settle(offers_table::const_iterator itr, name from, asset quantity, asset payout) {
    check(payout <= itr->funded - itr->sold, "insufficient funded inventory");
    check(payout <= itr->inventory_cap - itr->sold, "inventory cap reached");
-   check(balance_of(itr->payout_unit.get_extended_symbol()) >= payout, "insufficient contract payout balance");
 
    _offers.modify(itr, get_self(), [&](auto& row) {
       row.sold += payout;

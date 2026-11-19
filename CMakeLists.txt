@@ -4,7 +4,7 @@ project(toolkit_contracts)
 
 set(VERSION_MAJOR 3)
 set(VERSION_MINOR 7)
-set(VERSION_PATCH 1)
+set(VERSION_PATCH 2)
 # set(VERSION_SUFFIX "")
 
 if(VERSION_SUFFIX)
