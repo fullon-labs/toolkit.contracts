@@ -50,7 +50,7 @@ void flonsale::init(name admin) {
    require_auth(get_self());
    check(is_account(admin), "admin account does not exist");
    check(!_config.exists(), "flon.sale is already initialized");
-   _config.set(config_row{admin, name{}}, get_self());
+   _config.set(config_row{admin}, get_self());
 }
 
 void flonsale::createoffer(
@@ -124,25 +124,6 @@ void flonsale::withdrawinv(name pair, name to, asset quantity, string memo) {
 
    _offers.modify(itr, get_self(), [&](auto& row) { row.funded -= quantity; });
    transfer_token(itr->payout_unit.contract, to, quantity, memo);
-}
-
-void flonsale::proposeadmin(name new_admin) {
-   require_initialized();
-   require_admin();
-   check(is_account(new_admin), "new admin account does not exist");
-   check(new_admin != config().admin, "new admin is already the admin");
-   auto state = config();
-   state.proposed_admin = new_admin;
-   _config.set(state, get_self());
-}
-
-void flonsale::acceptadmin() {
-   auto state = config();
-   check(state.proposed_admin.value != 0, "no admin transfer has been proposed");
-   require_auth(state.proposed_admin);
-   state.admin = state.proposed_admin;
-   state.proposed_admin = name{};
-   _config.set(state, get_self());
 }
 
 void flonsale::cancelorder(uint64_t order_id) {

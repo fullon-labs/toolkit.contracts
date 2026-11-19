@@ -34,9 +34,6 @@ public:
    /** Move unsold payout inventory out only after pausing the pair. */
    [[eosio::action]] void withdrawinv(eosio::name pair, eosio::name to, eosio::asset quantity, std::string memo);
 
-   /** Transfer administration after an explicit two-step acceptance. */
-   [[eosio::action]] void proposeadmin(eosio::name new_admin);
-   [[eosio::action]] void acceptadmin();
    [[eosio::action]] void cancelorder(uint64_t order_id);
    [[eosio::action]] void fillorder(uint64_t order_id, eosio::asset payment);
 
@@ -48,8 +45,9 @@ public:
 
 private:
    struct [[eosio::table("config")]] config_row {
+      // Legacy rows have one extra trailing name. Keep admin first so both
+      // legacy and new rows deserialize to the same administrator.
       eosio::name admin;
-      eosio::name proposed_admin;
    };
    using config_singleton = eosio::singleton<"config"_n, config_row>;
 
